@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Sequência — AlfaPlay Especial</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body{display:flex;flex-direction:column;min-height:100vh;background:#0a1628;}
+  .main{flex:1;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:580px;margin:0 auto;width:100%;}
+  .instrucao{background:var(--dark2);border:2px solid #4ade80;border-radius:14px;padding:.8rem 1.2rem;text-align:center;width:100%;}
+  .instrucao .txt{font-size:1.05rem;color:#e2e8f0;font-weight:700;}
+  .instrucao .sub{font-size:.78rem;color:#64748b;margin-top:.2rem;}
+
+  /* Slots onde soltar */
+  .slots-row{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;}
+  .seq-slot{width:100px;height:115px;background:var(--dark3);border:3px dashed var(--border);
+    border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.3rem;transition:border-color .2s,background .2s;position:relative;}
+  .seq-slot .num{font-family:var(--pixel);font-size:.5rem;color:#475569;position:absolute;top:6px;left:50%;transform:translateX(-50%);}
+  .seq-slot.over{border-color:#4ade80;background:rgba(74,222,128,.1);}
+  .seq-slot.preenchido{border-style:solid;border-color:#60a5fa;}
+  .seq-slot.correta{border-color:#4ade80;background:rgba(74,222,128,.15);}
+  .seq-slot.errada{border-color:#f87171;background:rgba(248,113,113,.12);animation:shake .3s ease;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  /* Cards arrastáveis */
+  .opcoes-row{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;}
+  .seq-card{width:100px;height:115px;background:var(--dark2);border:3px solid var(--border);
+    border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.3rem;cursor:grab;user-select:none;transition:transform .12s,box-shadow .12s;
+    box-shadow:0 4px 0 rgba(0,0,0,.4);}
+  .seq-card:hover{transform:scale(1.06);border-color:#60a5fa;}
+  .seq-card.dragging{opacity:.35;cursor:grabbing;}
+  .seq-card.usado{opacity:.2;pointer-events:none;}
+  .seq-card .card-emoji{font-size:3.2rem;line-height:1;}
+  .seq-card .card-txt{font-family:var(--pixel);font-size:.38rem;color:#94a3b8;text-align:center;padding:0 4px;}
+
+  /* Reforço */
+  #reforco{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:1rem;}
+  #reforco.show{display:flex;}
+  .rf-ico{font-size:5rem;animation:pop .4s ease;}
+  .rf-txt{font-family:var(--pixel);font-size:clamp(.8rem,3.5vw,1.2rem);color:#facc15;text-shadow:3px 3px 0 #000;text-align:center;line-height:1.8;}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+  .tema-btns{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;}
+  .tema-btn{font-family:var(--pixel);font-size:.42rem;padding:.4em .9em;border-radius:99px;border:2px solid var(--border);background:var(--dark3);color:var(--text);cursor:pointer;transition:all .15s;}
+  .tema-btn.ativo{border-color:#4ade80;background:rgba(74,222,128,.15);color:#4ade80;}
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="especial.html" class="btn btn-gray" style="font-size:.8rem;">← VOLTAR</a>
+  <span class="pixel-title" style="color:#4ade80;">📋 SEQUÊNCIA</span>
+  <div class="score-badge" id="score-badge">⭐ 0</div>
+</header>
+
+<div class="main">
+  <div class="instrucao">
+    <div class="txt">👆 Coloque na ordem certa</div>
+    <div class="sub">Arraste ou toque para colocar em ordem</div>
+  </div>
+
+  <div class="tema-btns" id="tema-btns"></div>
+
+  <div class="slots-row" id="slots"></div>
+  <div class="opcoes-row" id="opcoes"></div>
+
+  <button class="btn btn-blue" onclick="verificar()" style="font-size:.9rem;width:200px;">✅ VERIFICAR</button>
+  <button class="btn btn-gray" onclick="proximaRodada()" style="font-size:.8rem;">🔄 NOVA</button>
+</div>
+
+<div id="reforco">
+  <div class="rf-ico" id="rf-ico">🌟</div>
+  <div class="rf-txt" id="rf-txt">MUITO BEM!</div>
+  <button class="btn btn-green" onclick="proximaRodada();document.getElementById('reforco').classList.remove('show')">➡️ PRÓXIMA</button>
+</div>
+<div id="confetti-overlay"></div>
+
+<script src="js/sounds.js"></script>
+<script>
+const TEMAS = {
+  'ROTINA': {
+    seqs: [
+      [{e:'⏰',n:'acordar'},{e:'🪥',n:'escovar'},{e:'🍳',n:'café'},{e:'🎒',n:'escola'}],
+      [{e:'🛁',n:'banho'},{e:'👕',n:'vestir'},{e:'🍽️',n:'jantar'},{e:'😴',n:'dormir'}],
+      [{e:'🍽️',n:'almoço'},{e:'🪥',n:'escovar'},{e:'📖',n:'estudar'},{e:'🎮',n:'brincar'}],
+    ]
+  },
+  'CRESCIMENTO': {
+    seqs: [
+      [{e:'🥚',n:'ovo'},{e:'🐣',n:'filhote'},{e:'🐥',n:'pintinho'},{e:'🐔',n:'galinha'}],
+      [{e:'🌱',n:'semente'},{e:'🌿',n:'broto'},{e:'🌳',n:'árvore'},{e:'🍎',n:'fruta'}],
+      [{e:'🥛',n:'bebê'},{e:'🧒',n:'criança'},{e:'👦',n:'jovem'},{e:'👨',n:'adulto'}],
+    ]
+  },
+  'HISTÓRIA': {
+    seqs: [
+      [{e:'☁️',n:'nuvem'},{e:'🌧️',n:'chuva'},{e:'🌈',n:'arco-íris'},{e:'☀️',n:'sol'}],
+      [{e:'🌱',n:'plantar'},{e:'💧',n:'regar'},{e:'🌻',n:'crescer'},{e:'🌸',n:'florescer'}],
+      [{e:'🛒',n:'comprar'},{e:'🥘',n:'cozinhar'},{e:'🍲',n:'servir'},{e:'😋',n:'comer'}],
+    ]
+  },
+};
+
+let temaAtual = 'ROTINA', sequenciaCorreta = [], slotsState = [], pontos = 0;
+let selecionado = null; // clique para colocar (alternativa ao drag)
+
+// Renderiza botões de tema
+const tbEl = document.getElementById('tema-btns');
+Object.keys(TEMAS).forEach(t => {
+  const b = document.createElement('button');
+  b.className = 'tema-btn' + (t === temaAtual ? ' ativo' : '');
+  b.textContent = t; b.dataset.t = t;
+  b.onclick = () => {
+    temaAtual = t;
+    document.querySelectorAll('.tema-btn').forEach(x => x.classList.remove('ativo'));
+    b.classList.add('ativo');
+    proximaRodada();
+  };
+  tbEl.appendChild(b);
+});
+
+function proximaRodada() {
+  document.getElementById('reforco').classList.remove('show');
+  const seqs = TEMAS[temaAtual].seqs;
+  sequenciaCorreta = seqs[Math.floor(Math.random()*seqs.length)];
+  slotsState = Array(sequenciaCorreta.length).fill(null);
+  selecionado = null;
+  renderSlots();
+  renderOpcoes();
+}
+
+function renderSlots() {
+  const el = document.getElementById('slots');
+  el.innerHTML = '';
+  sequenciaCorreta.forEach((_, i) => {
+    const s = document.createElement('div');
+    s.className = 'seq-slot' + (slotsState[i] ? ' preenchido' : '');
+    s.dataset.idx = i;
+    s.innerHTML = `<span class="num">${i+1}º</span>`;
+    if (slotsState[i]) {
+      s.innerHTML += `<div class="seq-card" style="border:none;box-shadow:none;background:transparent;pointer-events:none;">
+        <div class="card-emoji">${slotsState[i].e}</div>
+        <div class="card-txt">${slotsState[i].n.toUpperCase()}</div></div>`;
+    }
+    // Clique para colocar
+    s.addEventListener('click', () => colocarNoSlot(i));
+    // Drag-drop
+    s.addEventListener('dragover', e => { e.preventDefault(); s.classList.add('over'); });
+    s.addEventListener('dragleave', () => s.classList.remove('over'));
+    s.addEventListener('drop', e => { e.preventDefault(); s.classList.remove('over'); soltarNoSlot(e.dataTransfer.getData('idx'), i); });
+    el.appendChild(s);
+  });
+}
+
+function renderOpcoes() {
+  const embaralhado = [...sequenciaCorreta].sort(() => Math.random()-.5);
+  const el = document.getElementById('opcoes');
+  el.innerHTML = '';
+  embaralhado.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'seq-card';
+    card.draggable = true;
+    card.dataset.orig = sequenciaCorreta.indexOf(item);
+    card.dataset.di = i;
+    card.innerHTML = `<div class="card-emoji">${item.e}</div><div class="card-txt">${item.n.toUpperCase()}</div>`;
+    // Drag
+    card.addEventListener('dragstart', e => { e.dataTransfer.setData('idx', sequenciaCorreta.indexOf(item)); card.classList.add('dragging'); SFX.flip(); });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    // Clique para selecionar
+    card.addEventListener('click', () => {
+      if (card.classList.contains('usado')) return;
+      SFX.click(); falar(item.n);
+      if (selecionado === card) { selecionado = null; card.style.borderColor = ''; return; }
+      if (selecionado) selecionado.style.borderColor = '';
+      selecionado = card;
+      card.style.borderColor = '#facc15';
+    });
+    el.appendChild(card);
+  });
+}
+
+function colocarNoSlot(slotIdx) {
+  if (!selecionado || slotsState[slotIdx]) return;
+  const origIdx = parseInt(selecionado.dataset.orig);
+  slotsState[slotIdx] = sequenciaCorreta[origIdx];
+  selecionado.classList.add('usado');
+  selecionado.style.borderColor = '';
+  selecionado = null;
+  renderSlots(); SFX.click();
+}
+
+function soltarNoSlot(origIdx, slotIdx) {
+  if (slotsState[slotIdx]) return;
+  slotsState[slotIdx] = sequenciaCorreta[parseInt(origIdx)];
+  // Marca card como usado
+  document.querySelectorAll('.seq-card').forEach(c => {
+    if (c.dataset.orig === origIdx) c.classList.add('usado');
+  });
+  renderSlots(); SFX.click();
+}
+
+function verificar() {
+  if (slotsState.some(s => !s)) { falar('Complete todos os espaços primeiro'); return; }
+  const slots = document.querySelectorAll('.seq-slot');
+  let todosCorretos = true;
+  slotsState.forEach((item, i) => {
+    const correto = item.e === sequenciaCorreta[i].e;
+    slots[i].classList.add(correto ? 'correta' : 'errada');
+    if (!correto) { todosCorretos = false; slots[i].addEventListener('animationend', () => slots[i].classList.remove('errada'), {once:true}); }
+  });
+  if (todosCorretos) {
+    SFX.vitoria(); pontos += 15;
+    document.getElementById('score-badge').textContent = '⭐ ' + pontos;
+    confetti();
+    const MSGS = ['SEQUÊNCIA CERTA! 🎉','INCRÍVEL! ⭐','VOCÊ ARRASOU! 🏆','PERFEITO! 💫'];
+    document.getElementById('rf-ico').textContent = '🏆';
+    document.getElementById('rf-txt').textContent = MSGS[Math.floor(Math.random()*MSGS.length)];
+    document.getElementById('reforco').classList.add('show');
+    falar('Parabéns! Sequência correta!');
+  } else {
+    SFX.erro();
+    // Reseta slots errados
+    setTimeout(() => {
+      slotsState = slotsState.map((s,i) => s?.e === sequenciaCorreta[i].e ? s : null);
+      renderSlots();
+      document.querySelectorAll('.seq-card.usado').forEach(c => {
+        const orig = parseInt(c.dataset.orig);
+        if (!slotsState[orig]) c.classList.remove('usado');
+      });
+    }, 800);
+  }
+}
+
+function confetti() {
+  const ov = document.getElementById('confetti-overlay');
+  ['#4ade80','#60a5fa','#f472b6','#facc15','#fb923c'].forEach(c => {
+    for(let i=0;i<8;i++){
+      const p=document.createElement('div'); p.className='confetti-p';
+      p.style.left=Math.random()*100+'vw'; p.style.background=c;
+      p.style.animationDuration=(1.2+Math.random()*1.5)+'s';
+      p.style.animationDelay=Math.random()*0.4+'s';
+      ov.appendChild(p); setTimeout(()=>p.remove(),3000);
+    }
+  });
+}
+
+proximaRodada();
+</script>
+</body>
+</html>

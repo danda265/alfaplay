@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Forca — AlfaPlay</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body { display:flex; flex-direction:column; min-height:100vh; }
+  .main { flex:1; padding:1.2rem; display:flex; flex-direction:column; align-items:center; gap:1.2rem; max-width:600px; margin:0 auto; width:100%; }
+  .forca-svg { filter: drop-shadow(0 0 8px rgba(244,114,182,.4)); }
+  .erros-display { display:flex; gap:0.5rem; font-size:1.4rem; }
+  #btn-ouvir-dica { font-size:1.3rem; }
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="index.html" class="btn btn-gray" style="font-size:0.8rem;">← VOLTAR</a>
+  <span class="pixel-title" style="color:#f472b6;">🎪 FORCA</span>
+  <div class="score-badge" id="score-badge">⭐ 0</div>
+</header>
+
+<div class="main">
+  <div class="year-pills">
+    <button class="year-pill" data-ano="1" onclick="iniciar(1)">🟢 1º</button>
+    <button class="year-pill" data-ano="2" onclick="iniciar(2)">🔵 2º</button>
+    <button class="year-pill" data-ano="3" onclick="iniciar(3)">🩷 3º</button>
+  </div>
+
+  <!-- Desenho da forca em SVG pixel-style -->
+  <svg class="forca-svg" width="160" height="180" viewBox="0 0 160 180">
+    <!-- Estrutura -->
+    <rect x="10" y="165" width="140" height="10" fill="#475569" rx="2"/>
+    <rect x="30" y="15"  width="10"  height="155" fill="#475569" rx="2"/>
+    <rect x="30" y="15"  width="80"  height="10"  fill="#475569" rx="2"/>
+    <rect x="100" y="25" width="6"   height="25"  fill="#94a3b8" rx="2"/>
+    <!-- Personagem — partes reveladas por erros -->
+    <circle id="h-cabeca"  cx="103" cy="62"  r="14" fill="none" stroke="#f472b6" stroke-width="4" opacity="0"/>
+    <line   id="h-corpo"   x1="103" y1="76"  x2="103" y2="120" stroke="#f472b6" stroke-width="4" stroke-linecap="round" opacity="0"/>
+    <line   id="h-brac-e"  x1="103" y1="90"  x2="80"  y2="110" stroke="#f472b6" stroke-width="4" stroke-linecap="round" opacity="0"/>
+    <line   id="h-brac-d"  x1="103" y1="90"  x2="126" y2="110" stroke="#f472b6" stroke-width="4" stroke-linecap="round" opacity="0"/>
+    <line   id="h-perna-e" x1="103" y1="120" x2="82"  y2="148" stroke="#f472b6" stroke-width="4" stroke-linecap="round" opacity="0"/>
+    <line   id="h-perna-d" x1="103" y1="120" x2="124" y2="148" stroke="#f472b6" stroke-width="4" stroke-linecap="round" opacity="0"/>
+  </svg>
+
+  <div class="erros-display" id="erros-corações"></div>
+
+  <div class="emoji-big" id="emoji-display" style="font-size:3rem;">❓</div>
+  <button class="btn btn-pink" id="btn-ouvir-dica" onclick="ouvirDica()">🔊 OUVIR DICA</button>
+
+  <div class="forca-display" id="palavra-display">_ _ _</div>
+
+  <div class="keyboard-grid" id="teclado"></div>
+
+  <button class="btn btn-gray" onclick="iniciar(anoAtual)">🔄 NOVA PALAVRA</button>
+</div>
+
+<div id="toast-container"></div>
+<div id="confetti-overlay"></div>
+
+<script src="js/data.js"></script>
+<script src="js/sounds.js"></script>
+<script>
+const PARTES = ['h-cabeca','h-corpo','h-brac-e','h-brac-d','h-perna-e','h-perna-d'];
+const MAX_ERROS = PARTES.length;
+let anoAtual = parseInt(new URLSearchParams(location.search).get('ano')) || 1;
+let atual, letrasCorretas, letrasErradas, pontos = 0, encerrado = false;
+
+document.querySelectorAll('.year-pill').forEach(p => {
+  if (parseInt(p.dataset.ano) === anoAtual) p.classList.add('active');
+});
+
+function iniciar(ano) {
+  anoAtual = ano;
+  document.querySelectorAll('.year-pill').forEach(p =>
+    p.classList.toggle('active', parseInt(p.dataset.ano) === ano));
+  atual = palavraAleatoria(ano);
+  letrasCorretas = new Set();
+  letrasErradas  = new Set();
+  encerrado = false;
+  PARTES.forEach(id => document.getElementById(id).style.opacity = '0');
+  document.getElementById('emoji-display').textContent = '❓';
+  renderPalavra();
+  renderTeclado();
+  renderCoracoes();
+}
+
+function renderPalavra() {
+  const letras = atual.palavra.replace(/[ÀÁÂÃÄÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÇÑ]/g, c =>
+    ({À:'A',Á:'A',Â:'A',Ã:'A',È:'E',É:'E',Ê:'E',Ì:'I',Í:'I',Î:'I',Ò:'O',Ó:'O',Ô:'O',Õ:'O',Ù:'U',Ú:'U',Û:'U',Ç:'C',Ñ:'N'}[c]||c));
+  const display = letras.split('').map(l =>
+    l === ' ' ? ' ' : (letrasCorretas.has(l) ? l : '_')
+  ).join(' ');
+  document.getElementById('palavra-display').textContent = display;
+  return !display.includes('_');
+}
+
+function renderTeclado() {
+  const el = document.getElementById('teclado');
+  el.innerHTML = '';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+    const b = document.createElement('button');
+    b.className = 'key-btn';
+    b.textContent = l;
+    if (letrasCorretas.has(l)) { b.classList.add('certa'); b.disabled = true; }
+    if (letrasErradas.has(l))  { b.classList.add('errada'); b.disabled = true; }
+    b.addEventListener('click', () => tentarLetra(l));
+    el.appendChild(b);
+  });
+}
+
+function renderCoracoes() {
+  const erros = letrasErradas.size;
+  const restantes = MAX_ERROS - erros;
+  document.getElementById('erros-corações').innerHTML =
+    '❤️'.repeat(restantes) + '🖤'.repeat(erros);
+}
+
+function tentarLetra(l) {
+  if (encerrado) return;
+  const normalizado = atual.palavra
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+  if (normalizado.includes(l)) {
+    letrasCorretas.add(l);
+    // Também aceita letras acentuadas
+    normalizado.split('').forEach((c, i) => {
+      if (c === l) letrasCorretas.add(atual.palavra[i].toUpperCase());
+    });
+    SFX.acerto();
+    const completa = renderPalavra();
+    renderTeclado();
+    if (completa) {
+      encerrado = true;
+      document.getElementById('emoji-display').textContent = atual.emoji;
+      pontos += 10;
+      document.getElementById('score-badge').textContent = '⭐ ' + pontos;
+      SFX.vitoria(); confetti();
+      toast('🎉 ACERTOU! ' + atual.palavra, 'acerto');
+      falar('Parabéns! A palavra era ' + atual.palavra);
+    }
+  } else {
+    letrasErradas.add(l);
+    SFX.erro();
+    const erros = letrasErradas.size;
+    if (erros <= PARTES.length)
+      document.getElementById(PARTES[erros-1]).style.opacity = '1';
+    renderTeclado();
+    renderCoracoes();
+    toast('❌ ' + l + ' — não tem!', 'erro');
+    if (erros >= MAX_ERROS) {
+      encerrado = true;
+      document.getElementById('emoji-display').textContent = atual.emoji;
+      // Revela palavra
+      letrasCorretas = new Set(atual.palavra.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(''));
+      renderPalavra();
+      toast('💀 ERA: ' + atual.palavra, 'erro');
+      falar('A palavra era ' + atual.palavra);
+    }
+  }
+}
+
+function ouvirDica() {
+  if (!atual) return;
+  falar(atual.palavra);
+  toast('🔊 ' + atual.emoji + ' ' + atual.palavra, 'info');
+}
+
+function toast(msg, tipo) {
+  const c = document.getElementById('toast-container');
+  const d = document.createElement('div');
+  d.className = 'toast ' + tipo;
+  d.textContent = msg;
+  c.appendChild(d);
+  setTimeout(() => d.remove(), 2200);
+}
+
+function confetti() {
+  const ov = document.getElementById('confetti-overlay');
+  const cores = ['#4ade80','#60a5fa','#f472b6','#facc15','#fb923c','#c084fc'];
+  for (let i = 0; i < 50; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-p';
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.background = cores[Math.floor(Math.random()*cores.length)];
+    p.style.animationDuration = (1.5+Math.random()*2)+'s';
+    p.style.animationDelay = Math.random()*0.8+'s';
+    ov.appendChild(p);
+    setTimeout(() => p.remove(), 3500);
+  }
+}
+
+iniciar(anoAtual);
+</script>
+</body>
+</html>

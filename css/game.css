@@ -1,0 +1,381 @@
+/* AlfaPlay — Estilo Minecraft/Pixel — Anderson Rodrigo Costa © 2026 */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;900&display=swap');
+
+:root {
+  --pixel: 'Press Start 2P', monospace;
+  --round: 'Nunito', sans-serif;
+  --green:  #4ade80;
+  --blue:   #60a5fa;
+  --pink:   #f472b6;
+  --yellow: #facc15;
+  --orange: #fb923c;
+  --red:    #f87171;
+  --purple: #c084fc;
+  --dark:   #0f172a;
+  --dark2:  #1e293b;
+  --dark3:  #334155;
+  --border: #475569;
+  --text:   #e2e8f0;
+  --shadow: 4px 4px 0px rgba(0,0,0,0.5);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--dark);
+  color: var(--text);
+  font-family: var(--round);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Stars background ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: -1;
+  background:
+    radial-gradient(1px 1px at 10% 20%, #fff 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 60%, #fff 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 30%, #fff 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, #fff 0%, transparent 100%),
+    radial-gradient(2px 2px at 25% 75%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(2px 2px at 55% 15%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(2px 2px at 80% 50%, rgba(255,255,255,.6) 0%, transparent 100%),
+    var(--dark);
+}
+
+/* ── Pixel heading ── */
+.pixel-title {
+  font-family: var(--pixel);
+  font-size: clamp(0.7rem, 2vw, 1.2rem);
+  text-shadow: 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000;
+  letter-spacing: 1px;
+  line-height: 1.6;
+}
+
+/* ── Pixel block (Minecraft-style box) ── */
+.pixel-box {
+  background: var(--dark2);
+  border: 3px solid var(--border);
+  border-bottom: 6px solid rgba(0,0,0,0.4);
+  border-right: 6px solid rgba(0,0,0,0.4);
+  image-rendering: pixelated;
+}
+
+/* ── Buttons ── */
+.btn {
+  font-family: var(--round);
+  font-weight: 900;
+  font-size: 1rem;
+  padding: 0.6em 1.4em;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+  display: inline-flex; align-items: center; gap: 0.4em;
+  user-select: none;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+
+.btn-green  { background: var(--green);  color: #000; }
+.btn-blue   { background: var(--blue);   color: #000; }
+.btn-yellow { background: var(--yellow); color: #000; }
+.btn-pink   { background: var(--pink);   color: #000; }
+.btn-orange { background: var(--orange); color: #000; }
+.btn-red    { background: var(--red);    color: #000; }
+.btn-purple { background: var(--purple); color: #000; }
+.btn-gray   { background: var(--dark3);  color: var(--text); }
+
+/* ── Cards ── */
+.card {
+  background: var(--dark2);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 1.2rem;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.card:hover { transform: translateY(-3px); }
+
+/* ── Progress bar ── */
+.progress-wrap {
+  background: var(--dark3);
+  border-radius: 99px;
+  height: 18px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+}
+.progress-bar {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--green), var(--yellow));
+  transition: width 0.4s ease;
+}
+
+/* ── Score badge ── */
+.score-badge {
+  font-family: var(--pixel);
+  font-size: 0.65rem;
+  background: var(--yellow);
+  color: #000;
+  padding: 0.3em 0.8em;
+  border-radius: 8px;
+  border: 2px solid rgba(0,0,0,0.3);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+}
+
+/* ── Toast notifications ── */
+#toast-container {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  z-index: 9999; pointer-events: none;
+}
+.toast {
+  font-family: var(--pixel);
+  font-size: 0.65rem;
+  padding: 0.7em 1.5em;
+  border-radius: 10px;
+  border: 2px solid rgba(0,0,0,0.3);
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+  animation: toast-in 0.3s ease, toast-out 0.3s ease 1.7s forwards;
+  white-space: nowrap;
+}
+.toast.acerto  { background: var(--green);  color: #000; }
+.toast.erro    { background: var(--red);    color: #000; }
+.toast.info    { background: var(--blue);   color: #000; }
+.toast.vitoria { background: var(--yellow); color: #000; }
+
+@keyframes toast-in  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+@keyframes toast-out { from { opacity:1; } to { opacity:0; transform:translateY(-20px); } }
+
+/* ── Header nav ── */
+.game-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.8rem 1.2rem;
+  background: var(--dark2);
+  border-bottom: 3px solid var(--border);
+  flex-wrap: wrap; gap: 0.5rem;
+}
+
+/* ── Emoji big display ── */
+.emoji-big { font-size: clamp(3rem, 10vw, 6rem); line-height: 1; text-align: center; }
+
+/* ── Word display ── */
+.word-display {
+  font-family: var(--pixel);
+  font-size: clamp(1.2rem, 5vw, 2.5rem);
+  letter-spacing: 6px;
+  text-shadow: 3px 3px 0 #000;
+  text-align: center;
+}
+
+/* ── Slot row (syllable slots) ── */
+.slots-row {
+  display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center;
+  min-height: 60px; padding: 0.8rem;
+  background: var(--dark3); border-radius: 12px;
+  border: 2px dashed var(--border);
+}
+.syllable-slot {
+  min-width: 56px; height: 52px;
+  background: var(--dark); border: 2px dashed var(--border);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--pixel); font-size: 0.75rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+.syllable-slot.filled { border-style: solid; background: var(--dark2); border-color: var(--green); }
+.syllable-slot.correct { background: rgba(74,222,128,.3); border-color: var(--green); }
+.syllable-slot.wrong   { background: rgba(248,113,113,.3); border-color: var(--red); }
+
+/* ── Draggable syllables ── */
+.syllable-bank {
+  display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center;
+  padding: 0.8rem;
+}
+.syllable-chip {
+  font-family: var(--pixel);
+  font-size: 0.75rem;
+  padding: 0.5em 0.9em;
+  background: var(--blue);
+  color: #000;
+  border-radius: 8px;
+  border: 2px solid rgba(0,0,0,0.3);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.1s, opacity 0.2s;
+}
+.syllable-chip:hover { transform: scale(1.08); }
+.syllable-chip.dragging { opacity: 0.4; cursor: grabbing; }
+.syllable-chip.used { opacity: 0.2; pointer-events: none; }
+
+/* ── Memory grid ── */
+.memory-grid {
+  display: grid;
+  gap: 0.7rem;
+  justify-content: center;
+}
+.memory-card {
+  width: clamp(70px, 18vw, 110px);
+  aspect-ratio: 1;
+  perspective: 600px;
+  cursor: pointer;
+}
+.memory-card-inner {
+  width: 100%; height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease;
+  border-radius: 12px;
+}
+.memory-card.virado .memory-card-inner { transform: rotateY(180deg); }
+.memory-card-front, .memory-card-back {
+  position: absolute; inset: 0; border-radius: 12px;
+  backface-visibility: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  border: 3px solid var(--border);
+}
+.memory-card-front {
+  background: var(--dark3);
+  font-family: var(--pixel); font-size: 1rem;
+  color: var(--border);
+}
+.memory-card-back {
+  background: var(--dark2);
+  transform: rotateY(180deg);
+  flex-direction: column; gap: 4px;
+  font-size: 1.6rem;
+}
+.memory-card-back .mem-palavra {
+  font-family: var(--pixel); font-size: 0.45rem;
+  color: var(--yellow);
+}
+.memory-card.encontrado .memory-card-front,
+.memory-card.encontrado .memory-card-back {
+  border-color: var(--green);
+  background: rgba(74,222,128,.15);
+  box-shadow: 0 0 12px rgba(74,222,128,.5);
+}
+
+/* ── Hangman / Forca ── */
+.forca-display {
+  font-family: var(--pixel);
+  font-size: clamp(1rem, 4vw, 1.6rem);
+  letter-spacing: 10px;
+  text-align: center;
+  min-height: 60px;
+  color: var(--yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+.keyboard-grid {
+  display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;
+  max-width: 500px; margin: 0 auto;
+}
+.key-btn {
+  font-family: var(--pixel); font-size: 0.6rem;
+  width: 42px; height: 42px;
+  background: var(--dark3); color: var(--text);
+  border: 2px solid var(--border); border-radius: 6px;
+  cursor: pointer; transition: background 0.1s;
+  display: flex; align-items: center; justify-content: center;
+}
+.key-btn:hover:not(:disabled) { background: var(--blue); color: #000; }
+.key-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.key-btn.certa { background: var(--green); color: #000; border-color: var(--green); }
+.key-btn.errada { background: var(--red);   color: #000; border-color: var(--red); }
+
+/* ── Painting canvas ── */
+#pintura-canvas {
+  cursor: crosshair;
+  border-radius: 12px;
+  border: 3px solid var(--border);
+  display: block;
+  touch-action: none;
+  image-rendering: pixelated;
+}
+.palette {
+  display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;
+}
+.cor-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid transparent; cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+.cor-btn:hover { transform: scale(1.15); }
+.cor-btn.ativa { border-color: #fff; transform: scale(1.2); }
+
+/* ── Puzzle ── */
+.puzzle-grid {
+  display: grid;
+  gap: 3px;
+  background: var(--border);
+  border: 3px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+.puzzle-piece {
+  cursor: pointer;
+  transition: filter 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--dark3);
+  font-size: 1.5rem;
+}
+.puzzle-piece:hover { filter: brightness(1.3); }
+.puzzle-piece.selected { outline: 3px solid var(--yellow); outline-offset: -3px; }
+.puzzle-piece.correct  { outline: 3px solid var(--green);  outline-offset: -3px; }
+
+/* ── Dictation ── */
+.ditado-input {
+  font-family: var(--pixel);
+  font-size: clamp(0.8rem, 3vw, 1.2rem);
+  background: var(--dark3); color: var(--text);
+  border: 3px solid var(--border); border-radius: 10px;
+  padding: 0.8em 1em;
+  width: 100%; max-width: 400px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  text-align: center;
+  outline: none;
+}
+.ditado-input:focus { border-color: var(--blue); }
+
+/* ── Year selector pills ── */
+.year-pills {
+  display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center;
+}
+.year-pill {
+  font-family: var(--pixel); font-size: 0.6rem;
+  padding: 0.5em 1.2em;
+  border-radius: 99px; border: 2px solid transparent;
+  cursor: pointer; transition: all 0.15s;
+  background: var(--dark3); color: var(--text);
+}
+.year-pill.active { border-color: currentColor; }
+.year-pill[data-ano="1"].active { color: #4ade80; background: rgba(74,222,128,.15); }
+.year-pill[data-ano="2"].active { color: #60a5fa; background: rgba(96,165,250,.15); }
+.year-pill[data-ano="3"].active { color: #f472b6; background: rgba(244,114,182,.15); }
+
+/* ── Confetti overlay ── */
+#confetti-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9998; overflow: hidden;
+}
+.confetti-p {
+  position: absolute; top: -20px;
+  width: 10px; height: 14px;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+  to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 500px) {
+  .pixel-title { font-size: 0.55rem; }
+  .word-display { font-size: 1rem; }
+  .key-btn { width: 34px; height: 34px; font-size: 0.5rem; }
+}

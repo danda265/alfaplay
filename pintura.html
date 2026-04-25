@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Pintura — AlfaPlay</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body{display:flex;flex-direction:column;min-height:100vh;}
+  .main{flex:1;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:1rem;}
+
+  /* Seletor de desenhos */
+  .desenhos-scroll{display:flex;gap:.6rem;overflow-x:auto;padding:.4rem .2rem;width:100%;max-width:560px;scrollbar-width:thin;}
+  .desenho-btn{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:.3rem;background:var(--dark2);
+    border:2px solid var(--border);border-radius:10px;padding:.5rem .7rem;cursor:pointer;transition:border-color .15s;}
+  .desenho-btn:hover,.desenho-btn.ativo{border-color:var(--yellow);}
+  .desenho-btn .ico{font-size:1.8rem;}
+  .desenho-btn .nm{font-family:var(--pixel);font-size:.4rem;color:#94a3b8;}
+
+  /* SVG área */
+  #svg-wrap{background:var(--bg-tema,#f8fafc);border-radius:16px;border:3px solid var(--border);
+    overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.4);width:min(380px,96vw);height:min(380px,96vw);}
+  #svg-wrap svg{width:100%;height:100%;display:block;}
+  .regiao{cursor:pointer;transition:filter .1s;}
+  .regiao:hover{filter:brightness(1.15);}
+
+  /* Paleta */
+  .paleta-wrap{width:100%;max-width:400px;}
+  .paleta-titulo{font-family:var(--pixel);font-size:.45rem;color:#64748b;margin-bottom:.5rem;text-align:center;}
+  .paleta{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;}
+  .cor-btn{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer;
+    transition:transform .1s,border-color .1s;box-shadow:2px 2px 0 rgba(0,0,0,.5);}
+  .cor-btn:hover{transform:scale(1.15);}
+  .cor-btn.ativa{border-color:#fff;transform:scale(1.2);}
+
+  /* Ferramentas */
+  .tools{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;}
+
+  /* Fundos temáticos */
+  .fundos-titulo{font-family:var(--pixel);font-size:.45rem;color:#64748b;text-align:center;}
+  .fundos{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;}
+  .fundo-btn{padding:.4em .9em;border-radius:8px;font-size:.75rem;border:2px solid var(--border);
+    background:var(--dark3);color:var(--text);cursor:pointer;transition:border-color .15s;}
+  .fundo-btn:hover,.fundo-btn.ativo{border-color:var(--yellow);background:rgba(250,204,21,.1);}
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="index.html" class="btn btn-gray" style="font-size:.8rem;">← VOLTAR</a>
+  <span class="pixel-title" style="color:#fb923c;">🖌️ PINTURA</span>
+  <div style="display:flex;gap:.5rem;">
+    <button class="btn btn-gray"  style="font-size:.75rem;" onclick="limpar()">🗑️ LIMPAR</button>
+    <button class="btn btn-green" style="font-size:.75rem;" onclick="salvar()">💾 SALVAR</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Seletor de desenhos -->
+  <div class="desenhos-scroll" id="desenhos-scroll"></div>
+
+  <!-- Fundos -->
+  <div>
+    <p class="fundos-titulo">🌈 FUNDO</p>
+    <div class="fundos" id="fundos"></div>
+  </div>
+
+  <!-- SVG colorir -->
+  <div id="svg-wrap"><svg id="svg-colorir" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+  <!-- Paleta -->
+  <div class="paleta-wrap">
+    <p class="paleta-titulo">🎨 CORES</p>
+    <div class="paleta" id="paleta"></div>
+  </div>
+
+  <!-- Ferramentas extras -->
+  <div class="tools">
+    <button class="btn btn-orange" onclick="desfazer()" style="font-size:.8rem;">↩️ DESFAZER</button>
+    <button class="btn btn-pink"   onclick="falarNome()" style="font-size:.8rem;">🔊 OUVIR</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/sounds.js"></script>
+<script>
+// ── Paleta de cores ────────────────────────────────────────────
+const CORES = [
+  '#000000','#ffffff','#ef4444','#f97316','#facc15','#84cc16',
+  '#22c55e','#14b8a6','#06b6d4','#3b82f6','#8b5cf6','#ec4899',
+  '#fca5a5','#fed7aa','#fef08a','#bbf7d0','#bae6fd','#e9d5ff',
+  '#92400e','#065f46','#1e3a5f','#fef9c3','#f1f5f9','#334155',
+];
+let corAtual = '#ef4444';
+
+const paletaEl = document.getElementById('paleta');
+CORES.forEach(c => {
+  const b = document.createElement('button');
+  b.className = 'cor-btn' + (c === corAtual ? ' ativa' : '');
+  b.style.background = c;
+  if (c === '#ffffff' || c === '#fef9c3' || c === '#fef08a' || c === '#f1f5f9')
+    b.style.border = '3px solid #475569';
+  b.onclick = () => {
+    document.querySelectorAll('.cor-btn').forEach(x => x.classList.remove('ativa'));
+    b.classList.add('ativa'); corAtual = c; SFX.click();
+  };
+  paletaEl.appendChild(b);
+});
+
+// ── Fundos ─────────────────────────────────────────────────────
+const FUNDOS = [
+  {id:'branco', nome:'⬜ BRANCO',   bg:'#f8fafc'},
+  {id:'ceu',    nome:'☁️ CÉU',      bg:'linear-gradient(180deg,#bae6fd 0%,#e0f2fe 60%,#d1fae5 100%)'},
+  {id:'noite',  nome:'🌙 NOITE',    bg:'linear-gradient(180deg,#0f172a 0%,#1e1b4b 50%,#312e81 100%)'},
+  {id:'oceano', nome:'🌊 OCEANO',   bg:'linear-gradient(180deg,#0ea5e9 0%,#0369a1 50%,#164e63 100%)'},
+  {id:'floresta',nome:'🌲 FLORESTA',bg:'linear-gradient(180deg,#4ade80 0%,#16a34a 50%,#14532d 100%)'},
+  {id:'sunset', nome:'🌅 PÔR DO SOL',bg:'linear-gradient(180deg,#fb923c 0%,#f97316 40%,#fbbf24 100%)'},
+];
+let fundoAtual = 'branco';
+
+const fundosEl = document.getElementById('fundos');
+FUNDOS.forEach(f => {
+  const b = document.createElement('button');
+  b.className = 'fundo-btn' + (f.id === 'branco' ? ' ativo' : '');
+  b.textContent = f.nome; b.dataset.id = f.id;
+  b.onclick = () => {
+    fundoAtual = f.id;
+    document.querySelectorAll('.fundo-btn').forEach(x => x.classList.remove('ativo'));
+    b.classList.add('ativo');
+    document.getElementById('svg-wrap').style.background = f.bg;
+    SFX.click();
+  };
+  fundosEl.appendChild(b);
+});
+
+// ── Desenhos SVG ───────────────────────────────────────────────
+const DESENHOS = [
+  { id:'gato',      nome:'GATO',       emoji:'🐱', svg: svgGato()       },
+  { id:'cachorro',  nome:'CACHORRO',   emoji:'🐶', svg: svgCachorro()   },
+  { id:'borboleta', nome:'BORBOLETA',  emoji:'🦋', svg: svgBorboleta()  },
+  { id:'peixe',     nome:'PEIXE',      emoji:'🐟', svg: svgPeixe()      },
+  { id:'foguete',   nome:'FOGUETE',    emoji:'🚀', svg: svgFoguete()    },
+  { id:'casa',      nome:'CASA',       emoji:'🏠', svg: svgCasa()       },
+  { id:'arvore',    nome:'ÁRVORE',     emoji:'🌳', svg: svgArvore()     },
+  { id:'dino',      nome:'DINOSSAURO', emoji:'🦕', svg: svgDino()       },
+  { id:'sol',       nome:'SOL',        emoji:'☀️',  svg: svgSol()        },
+  { id:'unicornio', nome:'UNICÓRNIO',  emoji:'🦄', svg: svgUnicornio()  },
+];
+
+// ── Gerador de SVGs ────────────────────────────────────────────
+function svgGato() {
+  return `
+  <polygon id="orelha-e" class="regiao" points="50,110 80,50 115,100" fill="#e2e8f0" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+  <polygon id="orelha-e-in" class="regiao" points="63,105 82,65 105,100" fill="#fda4af" stroke="#1e293b" stroke-width="2" stroke-linejoin="round"/>
+  <polygon id="orelha-d" class="regiao" points="185,100 220,50 250,110" fill="#e2e8f0" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+  <polygon id="orelha-d-in" class="regiao" points="195,100 218,65 237,105" fill="#fda4af" stroke="#1e293b" stroke-width="2" stroke-linejoin="round"/>
+  <circle id="cabeca" class="regiao" cx="150" cy="175" r="105" fill="#e2e8f0" stroke="#1e293b" stroke-width="5"/>
+  <ellipse id="olho-e" class="regiao" cx="108" cy="158" rx="22" ry="26" fill="#6ee7b7" stroke="#1e293b" stroke-width="3"/>
+  <ellipse cx="108" cy="162" rx="9" ry="16" fill="#1e293b"/>
+  <ellipse cx="104" cy="154" rx="4" ry="4" fill="#ffffff"/>
+  <ellipse id="olho-d" class="regiao" cx="192" cy="158" rx="22" ry="26" fill="#6ee7b7" stroke="#1e293b" stroke-width="3"/>
+  <ellipse cx="192" cy="162" rx="9" ry="16" fill="#1e293b"/>
+  <ellipse cx="188" cy="154" rx="4" ry="4" fill="#ffffff"/>
+  <ellipse id="focinho" class="regiao" cx="150" cy="210" rx="50" ry="38" fill="#fce7f3" stroke="#1e293b" stroke-width="3"/>
+  <polygon id="nariz" class="regiao" points="150,192 138,208 162,208" fill="#f9a8d4" stroke="#1e293b" stroke-width="2"/>
+  <path d="M138,208 Q150,224 162,208" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+  <line x1="30" y1="200" x2="98" y2="210" stroke="#1e293b" stroke-width="2.5"/>
+  <line x1="30" y1="215" x2="98" y2="215" stroke="#1e293b" stroke-width="2.5"/>
+  <line x1="30" y1="230" x2="98" y2="220" stroke="#1e293b" stroke-width="2.5"/>
+  <line x1="202" y1="210" x2="270" y2="200" stroke="#1e293b" stroke-width="2.5"/>
+  <line x1="202" y1="215" x2="270" y2="215" stroke="#1e293b" stroke-width="2.5"/>
+  <line x1="202" y1="220" x2="270" y2="230" stroke="#1e293b" stroke-width="2.5"/>`;
+}
+
+function svgCachorro() {
+  return `
+  <ellipse id="orelha-e" class="regiao" cx="88" cy="115" rx="38" ry="55" fill="#d97706" stroke="#1e293b" stroke-width="4" transform="rotate(-15,88,115)"/>
+  <ellipse id="orelha-d" class="regiao" cx="212" cy="115" rx="38" ry="55" fill="#d97706" stroke="#1e293b" stroke-width="4" transform="rotate(15,212,115)"/>
+  <circle id="cabeca" class="regiao" cx="150" cy="160" r="105" fill="#fbbf24" stroke="#1e293b" stroke-width="5"/>
+  <ellipse id="olho-e" class="regiao" cx="108" cy="148" rx="20" ry="22" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+  <circle cx="110" cy="152" r="10" fill="#1e293b"/>
+  <circle cx="107" cy="147" r="3" fill="#ffffff"/>
+  <ellipse id="olho-d" class="regiao" cx="192" cy="148" rx="20" ry="22" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+  <circle cx="190" cy="152" r="10" fill="#1e293b"/>
+  <circle cx="187" cy="147" r="3" fill="#ffffff"/>
+  <ellipse id="focinho" class="regiao" cx="150" cy="202" rx="55" ry="42" fill="#fde68a" stroke="#1e293b" stroke-width="4"/>
+  <ellipse id="nariz" class="regiao" cx="150" cy="185" rx="22" ry="15" fill="#1e293b" stroke="#1e293b" stroke-width="2"/>
+  <circle cx="144" cy="183" r="4" fill="#475569"/>
+  <circle cx="156" cy="183" r="4" fill="#475569"/>
+  <path d="M132,202 Q150,218 168,202" fill="none" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M55,60 Q75,40 95,58" fill="none" stroke="#1e293b" stroke-width="3"/>
+  <path d="M205,58 Q225,40 245,60" fill="none" stroke="#1e293b" stroke-width="3"/>`;
+}
+
+function svgBorboleta() {
+  return `
+  <path id="asa-sup-e" class="regiao" d="M148,148 Q80,60 30,90 Q10,130 60,155 Q100,170 148,148Z" fill="#c084fc" stroke="#1e293b" stroke-width="4"/>
+  <path id="asa-sup-d" class="regiao" d="M152,148 Q220,60 270,90 Q290,130 240,155 Q200,170 152,148Z" fill="#c084fc" stroke="#1e293b" stroke-width="4"/>
+  <path id="asa-inf-e" class="regiao" d="M148,152 Q70,160 50,210 Q60,250 110,240 Q148,228 148,200Z" fill="#a855f7" stroke="#1e293b" stroke-width="4"/>
+  <path id="asa-inf-d" class="regiao" d="M152,152 Q230,160 250,210 Q240,250 190,240 Q152,228 152,200Z" fill="#a855f7" stroke="#1e293b" stroke-width="4"/>
+  <!-- Detalhes das asas -->
+  <circle id="mancha-e" class="regiao" cx="90" cy="118" r="22" fill="#f0abfc" stroke="#1e293b" stroke-width="2"/>
+  <circle id="mancha-d" class="regiao" cx="210" cy="118" r="22" fill="#f0abfc" stroke="#1e293b" stroke-width="2"/>
+  <circle id="mancha-ie" class="regiao" cx="95" cy="210" r="16" fill="#e9d5ff" stroke="#1e293b" stroke-width="2"/>
+  <circle id="mancha-id" class="regiao" cx="205" cy="210" r="16" fill="#e9d5ff" stroke="#1e293b" stroke-width="2"/>
+  <!-- Corpo -->
+  <ellipse id="corpo" class="regiao" cx="150" cy="175" rx="14" ry="55" fill="#1e293b" stroke="#1e293b" stroke-width="3"/>
+  <circle id="cabeca" class="regiao" cx="150" cy="115" r="18" fill="#fde68a" stroke="#1e293b" stroke-width="3"/>
+  <path d="M144,98 Q130,72 118,60" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+  <path d="M156,98 Q170,72 182,60" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="118" cy="60" r="5" fill="#1e293b"/>
+  <circle cx="182" cy="60" r="5" fill="#1e293b"/>`;
+}
+
+function svgPeixe() {
+  return `
+  <path id="cauda" class="regiao" d="M240,150 L290,100 L300,150 L290,200 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+  <ellipse id="corpo" class="regiao" cx="138" cy="150" rx="125" ry="80" fill="#7dd3fc" stroke="#1e293b" stroke-width="5"/>
+  <path id="barriga" class="regiao" d="M50,170 Q138,220 230,170 Q200,185 138,185 Q80,185 50,170Z" fill="#bae6fd" stroke="#1e293b" stroke-width="2"/>
+  <path id="nadadeira-top" class="regiao" d="M100,72 Q140,30 180,72" fill="#0ea5e9" stroke="#1e293b" stroke-width="3" stroke-linejoin="round"/>
+  <path id="nadadeira-bot" class="regiao" d="M100,228 Q138,265 178,228" fill="#0ea5e9" stroke="#1e293b" stroke-width="3" stroke-linejoin="round"/>
+  <circle id="olho" class="regiao" cx="72" cy="135" r="25" fill="#ffffff" stroke="#1e293b" stroke-width="4"/>
+  <circle cx="75" cy="138" r="13" fill="#1e293b"/>
+  <circle cx="72" cy="133" r="4" fill="#ffffff"/>
+  <path d="M40,152 Q28,150 28,162 Q28,172 40,168" fill="none" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Escamas decorativas -->
+  <path d="M160,110 Q172,100 184,110" fill="none" stroke="#1e293b" stroke-width="1.5" opacity=".5"/>
+  <path d="M180,130 Q192,120 204,130" fill="none" stroke="#1e293b" stroke-width="1.5" opacity=".5"/>
+  <path d="M160,150 Q172,140 184,150" fill="none" stroke="#1e293b" stroke-width="1.5" opacity=".5"/>
+  <path d="M180,170 Q192,160 204,170" fill="none" stroke="#1e293b" stroke-width="1.5" opacity=".5"/>`;
+}
+
+function svgFoguete() {
+  return `
+  <!-- Chamas -->
+  <path id="chama-grande" class="regiao" d="M118,268 Q130,310 150,295 Q170,310 182,268Z" fill="#fb923c" stroke="#1e293b" stroke-width="3"/>
+  <path id="chama-media" class="regiao" d="M130,268 Q140,292 150,282 Q160,292 170,268Z" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+  <!-- Aletas -->
+  <path id="aleta-e" class="regiao" d="M118,200 Q70,230 75,270 L118,260Z" fill="#f472b6" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+  <path id="aleta-d" class="regiao" d="M182,200 Q230,230 225,270 L182,260Z" fill="#f472b6" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Corpo -->
+  <rect id="corpo" class="regiao" x="110" y="100" width="80" height="170" rx="10" fill="#e2e8f0" stroke="#1e293b" stroke-width="5"/>
+  <!-- Cone -->
+  <path id="cone" class="regiao" d="M110,105 Q150,10 190,105Z" fill="#ef4444" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Janela -->
+  <circle id="janela" class="regiao" cx="150" cy="185" r="32" fill="#bae6fd" stroke="#1e293b" stroke-width="5"/>
+  <circle cx="150" cy="185" r="22" fill="#7dd3fc" stroke="#1e293b" stroke-width="2"/>
+  <circle cx="143" cy="178" r="6" fill="#ffffff" opacity=".7"/>
+  <!-- Parafusos decorativos -->
+  <circle cx="125" cy="140" r="6" fill="#94a3b8" stroke="#1e293b" stroke-width="2"/>
+  <circle cx="175" cy="140" r="6" fill="#94a3b8" stroke="#1e293b" stroke-width="2"/>
+  <circle cx="125" cy="235" r="6" fill="#94a3b8" stroke="#1e293b" stroke-width="2"/>
+  <circle cx="175" cy="235" r="6" fill="#94a3b8" stroke="#1e293b" stroke-width="2"/>`;
+}
+
+function svgCasa() {
+  return `
+  <!-- Grama -->
+  <rect id="grama" class="regiao" x="0" y="255" width="300" height="45" fill="#4ade80" stroke="#1e293b" stroke-width="0"/>
+  <!-- Paredes -->
+  <rect id="parede-e" class="regiao" x="30" y="158" width="70" height="100" fill="#fef3c7" stroke="#1e293b" stroke-width="4"/>
+  <rect id="parede-d" class="regiao" x="200" y="158" width="70" height="100" fill="#fef3c7" stroke="#1e293b" stroke-width="4"/>
+  <rect id="parede-c" class="regiao" x="100" y="165" width="100" height="93" fill="#fef9c3" stroke="#1e293b" stroke-width="4"/>
+  <!-- Telhado -->
+  <polygon id="telhado-e" class="regiao" points="18,162 150,55 150,162" fill="#ef4444" stroke="#1e293b" stroke-width="5" stroke-linejoin="round"/>
+  <polygon id="telhado-d" class="regiao" points="150,55 282,162 150,162" fill="#dc2626" stroke="#1e293b" stroke-width="5" stroke-linejoin="round"/>
+  <!-- Chaminé -->
+  <rect id="chamine" class="regiao" x="198" y="72" width="28" height="55" fill="#92400e" stroke="#1e293b" stroke-width="3"/>
+  <!-- Porta -->
+  <rect id="porta" class="regiao" x="126" y="210" width="48" height="48" rx="24" fill="#92400e" stroke="#1e293b" stroke-width="4"/>
+  <circle cx="167" cy="235" r="5" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+  <!-- Janelas -->
+  <rect id="jan-e" class="regiao" x="42" y="178" width="46" height="40" rx="5" fill="#bae6fd" stroke="#1e293b" stroke-width="3"/>
+  <line x1="65" y1="178" x2="65" y2="218" stroke="#1e293b" stroke-width="2"/>
+  <line x1="42" y1="198" x2="88" y2="198" stroke="#1e293b" stroke-width="2"/>
+  <rect id="jan-d" class="regiao" x="212" y="178" width="46" height="40" rx="5" fill="#bae6fd" stroke="#1e293b" stroke-width="3"/>
+  <line x1="235" y1="178" x2="235" y2="218" stroke="#1e293b" stroke-width="2"/>
+  <line x1="212" y1="198" x2="258" y2="198" stroke="#1e293b" stroke-width="2"/>`;
+}
+
+function svgArvore() {
+  return `
+  <!-- Tronco -->
+  <rect id="tronco" class="regiao" x="120" y="210" width="60" height="80" rx="6" fill="#92400e" stroke="#1e293b" stroke-width="5"/>
+  <!-- Raízes -->
+  <path d="M120,270 Q90,285 75,295" fill="none" stroke="#92400e" stroke-width="8" stroke-linecap="round"/>
+  <path d="M180,270 Q210,285 225,295" fill="none" stroke="#92400e" stroke-width="8" stroke-linecap="round"/>
+  <!-- Copa de baixo -->
+  <ellipse id="copa-base" class="regiao" cx="150" cy="200" rx="110" ry="65" fill="#16a34a" stroke="#1e293b" stroke-width="5"/>
+  <!-- Copa do meio -->
+  <ellipse id="copa-meio" class="regiao" cx="150" cy="155" rx="90" ry="62" fill="#22c55e" stroke="#1e293b" stroke-width="4"/>
+  <!-- Copa do topo -->
+  <ellipse id="copa-topo" class="regiao" cx="150" cy="108" rx="68" ry="58" fill="#4ade80" stroke="#1e293b" stroke-width="4"/>
+  <!-- Frutas -->
+  <circle id="fruta-1" class="regiao" cx="98"  cy="175" r="14" fill="#ef4444" stroke="#1e293b" stroke-width="3"/>
+  <circle id="fruta-2" class="regiao" cx="200" cy="178" r="14" fill="#ef4444" stroke="#1e293b" stroke-width="3"/>
+  <circle id="fruta-3" class="regiao" cx="150" cy="165" r="14" fill="#ef4444" stroke="#1e293b" stroke-width="3"/>
+  <circle id="fruta-4" class="regiao" cx="118" cy="126" r="12" fill="#facc15" stroke="#1e293b" stroke-width="3"/>
+  <circle id="fruta-5" class="regiao" cx="182" cy="130" r="12" fill="#facc15" stroke="#1e293b" stroke-width="3"/>
+  <!-- Ponto de luz na copa -->
+  <ellipse cx="115" cy="95" rx="22" ry="14" fill="#86efac" opacity=".4"/>`;
+}
+
+function svgDino() {
+  return `
+  <!-- Cauda -->
+  <path id="cauda" class="regiao" d="M240,200 Q290,180 295,220 Q290,255 250,240 L220,225Z" fill="#4ade80" stroke="#1e293b" stroke-width="4"/>
+  <!-- Corpo -->
+  <ellipse id="corpo" class="regiao" cx="148" cy="190" rx="115" ry="85" fill="#4ade80" stroke="#1e293b" stroke-width="5"/>
+  <!-- Barriga -->
+  <ellipse id="barriga" class="regiao" cx="140" cy="205" rx="75" ry="55" fill="#bbf7d0" stroke="#1e293b" stroke-width="3"/>
+  <!-- Pescoço -->
+  <path id="pescoco" class="regiao" d="M82,130 Q95,80 130,72 Q155,70 165,90 Q155,115 140,118 L95,140Z" fill="#4ade80" stroke="#1e293b" stroke-width="4"/>
+  <!-- Cabeça -->
+  <ellipse id="cabeca" class="regiao" cx="148" cy="68" rx="58" ry="45" fill="#22c55e" stroke="#1e293b" stroke-width="5"/>
+  <!-- Boca -->
+  <path id="boca" class="regiao" d="M105,75 Q148,115 191,75" fill="#fca5a5" stroke="#1e293b" stroke-width="3"/>
+  <path d="M118,75 L118,90 M135,77 L133,94 M163,77 L165,94 M178,75 L178,90" stroke="#1e293b" stroke-width="2"/>
+  <!-- Olho -->
+  <circle id="olho" class="regiao" cx="128" cy="52" r="18" fill="#ffffff" stroke="#1e293b" stroke-width="4"/>
+  <circle cx="130" cy="55" r="9" fill="#1e293b"/>
+  <circle cx="127" cy="51" r="3" fill="#ffffff"/>
+  <!-- Espinhos -->
+  <polygon id="esp-1" class="regiao" points="155,28 162,12 169,28" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+  <polygon id="esp-2" class="regiao" points="170,35 178,16 186,35" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+  <!-- Patas -->
+  <rect id="pata-fe" class="regiao" x="58"  y="258" width="48" height="32" rx="8" fill="#16a34a" stroke="#1e293b" stroke-width="4"/>
+  <rect id="pata-fd" class="regiao" x="168" y="258" width="48" height="32" rx="8" fill="#16a34a" stroke="#1e293b" stroke-width="4"/>
+  <path d="M58,285 Q64,298 72,285 M76,285 Q82,298 90,285 M98,285 Q104,298 106,285" fill="none" stroke="#1e293b" stroke-width="2"/>
+  <path d="M168,285 Q174,298 182,285 M186,285 Q192,298 200,285 M208,285 Q214,298 216,285" fill="none" stroke="#1e293b" stroke-width="2"/>`;
+}
+
+function svgSol() {
+  return `
+  <!-- Raios -->
+  ${[0,30,60,90,120,150,180,210,240,270,300,330].map((a,i) => {
+    const r=Math.PI*a/180, x1=150+85*Math.cos(r), y1=150+85*Math.sin(r), x2=150+115*Math.cos(r), y2=150+115*Math.sin(r);
+    return `<line id="raio-${i}" class="regiao" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#facc15" stroke-width="12" stroke-linecap="round"/>`;
+  }).join('\n  ')}
+  <!-- Sol -->
+  <circle id="sol-anel" class="regiao" cx="150" cy="150" r="85" fill="#fde047" stroke="#1e293b" stroke-width="6"/>
+  <circle id="sol-centro" class="regiao" cx="150" cy="150" r="65" fill="#facc15" stroke="#1e293b" stroke-width="4"/>
+  <!-- Rosto -->
+  <circle id="olho-e" class="regiao" cx="122" cy="138" r="14" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+  <circle cx="124" cy="141" r="7" fill="#1e293b"/>
+  <circle id="olho-d" class="regiao" cx="178" cy="138" r="14" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+  <circle cx="176" cy="141" r="7" fill="#1e293b"/>
+  <path d="M122,168 Q150,192 178,168" fill="none" stroke="#1e293b" stroke-width="5" stroke-linecap="round"/>
+  <!-- Bochechas -->
+  <ellipse id="boch-e" class="regiao" cx="108" cy="165" rx="16" ry="12" fill="#fca5a5" opacity=".8"/>
+  <ellipse id="boch-d" class="regiao" cx="192" cy="165" rx="16" ry="12" fill="#fca5a5" opacity=".8"/>`;
+}
+
+function svgUnicornio() {
+  return `
+  <!-- Corpo -->
+  <ellipse id="corpo" class="regiao" cx="162" cy="210" rx="108" ry="68" fill="#fce7f3" stroke="#1e293b" stroke-width="5"/>
+  <!-- Pernas -->
+  <rect id="perna-1" class="regiao" x="82"  y="258" width="32" height="45" rx="8" fill="#f9a8d4" stroke="#1e293b" stroke-width="4"/>
+  <rect id="perna-2" class="regiao" x="128" y="262" width="32" height="45" rx="8" fill="#f9a8d4" stroke="#1e293b" stroke-width="4"/>
+  <rect id="perna-3" class="regiao" x="180" y="258" width="32" height="45" rx="8" fill="#f9a8d4" stroke="#1e293b" stroke-width="4"/>
+  <rect id="perna-4" class="regiao" x="226" y="258" width="32" height="45" rx="8" fill="#f9a8d4" stroke="#1e293b" stroke-width="4"/>
+  <!-- Cauda -->
+  <path id="cauda" class="regiao" d="M54,205 Q18,175 25,220 Q18,260 55,250 Q80,242 80,225Z" fill="#c084fc" stroke="#1e293b" stroke-width="4"/>
+  <path d="M54,205 Q20,215 26,240" fill="none" stroke="#f472b6" stroke-width="3"/>
+  <path d="M54,205 Q15,200 22,230" fill="none" stroke="#60a5fa" stroke-width="3"/>
+  <!-- Pescoço -->
+  <path id="pescoco" class="regiao" d="M185,165 Q195,140 195,120 Q185,100 170,100 Q155,100 148,118 Q142,138 150,165Z" fill="#fce7f3" stroke="#1e293b" stroke-width="4"/>
+  <!-- Juba -->
+  <path id="juba" class="regiao" d="M188,165 Q215,145 212,120 Q205,95 185,92" fill="#c084fc" stroke="#1e293b" stroke-width="3"/>
+  <path d="M195,148 Q218,130 215,108" fill="none" stroke="#f472b6" stroke-width="2.5"/>
+  <path d="M192,158 Q220,140 218,115" fill="none" stroke="#60a5fa" stroke-width="2.5"/>
+  <!-- Cabeça -->
+  <ellipse id="cabeca" class="regiao" cx="162" cy="95" rx="52" ry="45" fill="#fde68a" stroke="#1e293b" stroke-width="5"/>
+  <!-- Corno -->
+  <polygon id="corno" class="regiao" points="150,56 170,56 158,12" fill="#facc15" stroke="#1e293b" stroke-width="3" stroke-linejoin="round"/>
+  <line x1="153" y1="50" x2="158" y2="20" stroke="#fb923c" stroke-width="1.5"/>
+  <!-- Olho -->
+  <ellipse id="olho" class="regiao" cx="145" cy="92" rx="18" ry="20" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+  <ellipse cx="146" cy="96" rx="8" ry="12" fill="#1e293b"/>
+  <circle cx="143" cy="90" r="3" fill="#ffffff"/>
+  <!-- Narina e boca -->
+  <ellipse cx="175" cy="112" rx="9" ry="6" fill="#fca5a5" stroke="#1e293b" stroke-width="2"/>
+  <path d="M150,118 Q162,128 175,118" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Estrelinhas -->
+  <text x="30" y="190" font-size="20">✨</text>
+  <text x="248" y="175" font-size="18">⭐</text>
+  <text x="55" y="145" font-size="16">💫</text>`;
+}
+
+// ── Montar seletor de desenhos ─────────────────────────────────
+let desenhoAtual = DESENHOS[0];
+const scrollEl = document.getElementById('desenhos-scroll');
+DESENHOS.forEach(d => {
+  const b = document.createElement('div');
+  b.className = 'desenho-btn' + (d.id === desenhoAtual.id ? ' ativo' : '');
+  b.dataset.id = d.id;
+  b.innerHTML = `<div class="ico">${d.emoji}</div><div class="nm">${d.nome}</div>`;
+  b.onclick = () => carregarDesenho(d.id);
+  scrollEl.appendChild(b);
+});
+
+// ── Histórico para desfazer ────────────────────────────────────
+let historico = [];
+function salvarEstado() {
+  const regioes = document.querySelectorAll('.regiao');
+  historico.push([...regioes].map(r => r.getAttribute('fill')));
+}
+function desfazer() {
+  if (!historico.length) return;
+  const estado = historico.pop();
+  const regioes = document.querySelectorAll('.regiao');
+  regioes.forEach((r,i) => { if (estado[i]) r.setAttribute('fill', estado[i]); });
+  SFX.flip();
+}
+
+// ── Carregar desenho ───────────────────────────────────────────
+function carregarDesenho(id) {
+  const d = DESENHOS.find(x => x.id === id);
+  if (!d) return;
+  desenhoAtual = d;
+  historico = [];
+  document.querySelectorAll('.desenho-btn').forEach(b =>
+    b.classList.toggle('ativo', b.dataset.id === id));
+  const svg = document.getElementById('svg-colorir');
+  svg.innerHTML = d.svg;
+  svg.querySelectorAll('.regiao').forEach(el => {
+    el.addEventListener('click', () => {
+      salvarEstado();
+      el.setAttribute('fill', corAtual);
+      SFX.click();
+    });
+  });
+  falar(d.nome);
+  SFX.click();
+}
+
+// ── Limpar ─────────────────────────────────────────────────────
+function limpar() {
+  salvarEstado();
+  carregarDesenho(desenhoAtual.id);
+  toast('🗑️ LIMPO!', 'info');
+}
+
+// ── Falar nome ─────────────────────────────────────────────────
+function falarNome() { falar(desenhoAtual.nome); }
+
+// ── Salvar como PNG ────────────────────────────────────────────
+function salvar() {
+  const wrap = document.getElementById('svg-wrap');
+  const svg = document.getElementById('svg-colorir');
+  const fundo = FUNDOS.find(f => f.id === fundoAtual)?.bg || '#f8fafc';
+
+  // Serializa SVG
+  const serializer = new XMLSerializer();
+  const svgStr = serializer.serializeToString(svg);
+  const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 380;
+    const ctx = c.getContext('2d');
+    // Fundo
+    if (fundo.startsWith('linear')) {
+      // Usa cor sólida como fallback
+      ctx.fillStyle = '#87ceeb';
+    } else {
+      ctx.fillStyle = fundo;
+    }
+    ctx.fillRect(0,0,380,380);
+    ctx.drawImage(img, 0, 0, 380, 380);
+    URL.revokeObjectURL(url);
+    const link = document.createElement('a');
+    link.download = `alfaplay-${desenhoAtual.nome.toLowerCase()}.png`;
+    link.href = c.toDataURL('image/png');
+    link.click();
+    SFX.acerto();
+    toast('💾 IMAGEM SALVA!', 'acerto');
+  };
+  img.src = url;
+}
+
+function toast(msg, tipo) {
+  const c = document.getElementById('toast-container');
+  const d = document.createElement('div');
+  d.className = 'toast ' + tipo; d.textContent = msg;
+  c.appendChild(d); setTimeout(() => d.remove(), 2200);
+}
+
+// ── Iniciar ────────────────────────────────────────────────────
+carregarDesenho(DESENHOS[0].id);
+</script>
+</body>
+</html>

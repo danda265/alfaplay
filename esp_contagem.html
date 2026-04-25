@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Contagem — AlfaPlay Especial</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body{display:flex;flex-direction:column;min-height:100vh;background:#0a1628;}
+  .main{flex:1;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:520px;margin:0 auto;width:100%;}
+  .instrucao{background:var(--dark2);border:2px solid #f472b6;border-radius:14px;padding:.8rem 1.2rem;text-align:center;width:100%;}
+  .instrucao .txt{font-size:1.05rem;color:#e2e8f0;font-weight:700;}
+  .instrucao .sub{font-size:.78rem;color:#64748b;margin-top:.2rem;}
+
+  /* Área de objetos */
+  .objetos-area{background:var(--dark2);border:3px solid var(--border);border-radius:18px;
+    padding:1.2rem;display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;
+    align-items:center;min-height:140px;width:100%;max-width:380px;}
+  .obj-item{font-size:clamp(2rem,8vw,3rem);cursor:pointer;transition:transform .12s;
+    display:inline-block;line-height:1.2;}
+  .obj-item:hover{transform:scale(1.2);}
+  .obj-item.contado{filter:brightness(.5);transform:scale(.9);}
+
+  /* Contagem tátil */
+  .contagem-display{font-family:var(--pixel);font-size:clamp(1.5rem,8vw,3.5rem);
+    color:#facc15;text-shadow:3px 3px 0 #000;min-height:70px;display:flex;align-items:center;}
+  .contagem-label{font-family:var(--pixel);font-size:.5rem;color:#64748b;}
+
+  /* Botões de resposta */
+  .numeros-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem;width:100%;max-width:400px;}
+  .num-btn{background:var(--dark2);border:3px solid var(--border);border-radius:12px;
+    font-family:var(--pixel);font-size:1.2rem;color:var(--text);cursor:pointer;
+    padding:.6em .2em;transition:transform .1s,border-color .15s,background .15s;
+    box-shadow:0 3px 0 rgba(0,0,0,.4);}
+  .num-btn:hover{transform:scale(1.08);border-color:#f472b6;}
+  .num-btn:active{transform:scale(.95);}
+  .num-btn.correta{border-color:#4ade80;background:rgba(74,222,128,.2);animation:bounce .4s ease;}
+  .num-btn.errada{border-color:#f87171;background:rgba(248,113,113,.15);animation:shake .3s ease;}
+  @keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  /* Reforço */
+  #reforco{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:1rem;}
+  #reforco.show{display:flex;}
+  .rf-ico{font-size:5rem;animation:pop .4s ease;}
+  .rf-txt{font-family:var(--pixel);font-size:clamp(.8rem,3.5vw,1.2rem);color:#facc15;
+    text-shadow:3px 3px 0 #000;text-align:center;line-height:1.8;}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+  .nivel-btns{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;}
+  .nivel-btn{font-family:var(--pixel);font-size:.42rem;padding:.4em .9em;border-radius:99px;
+    border:2px solid var(--border);background:var(--dark3);color:var(--text);cursor:pointer;transition:all .15s;}
+  .nivel-btn.ativo{border-color:#f472b6;background:rgba(244,114,182,.15);color:#f472b6;}
+
+  .estrelas{font-size:1.4rem;min-height:30px;}
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="especial.html" class="btn btn-gray" style="font-size:.8rem;">← VOLTAR</a>
+  <span class="pixel-title" style="color:#f472b6;">🔢 CONTAGEM</span>
+  <div class="score-badge" id="score-badge">⭐ 0</div>
+</header>
+
+<div class="main">
+  <div class="instrucao">
+    <div class="txt" id="instrucao-txt">👆 Quantos tem? Toque no número</div>
+    <div class="sub">Conte os objetos e escolha o número</div>
+  </div>
+
+  <div class="nivel-btns">
+    <button class="nivel-btn ativo" onclick="setNivel(5,this)">🟢 ATÉ 5</button>
+    <button class="nivel-btn"       onclick="setNivel(10,this)">🔵 ATÉ 10</button>
+  </div>
+
+  <div class="objetos-area" id="objetos-area"></div>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:.2rem;">
+    <div class="contagem-label">CONTEI:</div>
+    <div class="contagem-display" id="contagem-display">?</div>
+  </div>
+
+  <div class="numeros-grid" id="numeros-grid"></div>
+
+  <div class="estrelas" id="estrelas"></div>
+</div>
+
+<div id="reforco">
+  <div class="rf-ico" id="rf-ico">⭐</div>
+  <div class="rf-txt" id="rf-txt">MUITO BEM!</div>
+</div>
+<div id="confetti-overlay"></div>
+
+<script src="js/sounds.js"></script>
+<script>
+const EMOJIS_POOL = ['🍎','🌟','🐱','⚽','🦋','🌸','🎈','🍪','🐸','🚂','🦄','🌙'];
+let maxNum = 5, quantCorreto = 0, contados = 0, pontos = 0, acertos = 0, bloqueado = false;
+
+function setNivel(n, el) {
+  maxNum = n;
+  document.querySelectorAll('.nivel-btn').forEach(b => b.classList.remove('ativo'));
+  el.classList.add('ativo');
+  proximaRodada();
+}
+
+function proximaRodada() {
+  bloqueado = false; contados = 0;
+  document.getElementById('contagem-display').textContent = '?';
+  quantCorreto = Math.floor(Math.random() * maxNum) + 1;
+  const emoji = EMOJIS_POOL[Math.floor(Math.random() * EMOJIS_POOL.length)];
+
+  // Instrução falada
+  falar('Quantos ' + emoji + ' você vê?');
+
+  // Renderiza objetos
+  const area = document.getElementById('objetos-area');
+  area.innerHTML = '';
+  for (let i = 0; i < quantCorreto; i++) {
+    const span = document.createElement('span');
+    span.className = 'obj-item';
+    span.textContent = emoji;
+    span.dataset.idx = i;
+    span.addEventListener('click', () => {
+      if (span.classList.contains('contado')) return;
+      span.classList.add('contado');
+      contados++;
+      document.getElementById('contagem-display').textContent = contados;
+      // Fala o número
+      falar(String(contados));
+      SFX.flip();
+    });
+    area.appendChild(span);
+  }
+
+  // Botões de números
+  const nums = new Set([quantCorreto]);
+  while (nums.size < Math.min(maxNum, 5)) nums.add(Math.floor(Math.random()*maxNum)+1);
+  const opcoes = [...nums].sort(() => Math.random()-.5);
+  const grid = document.getElementById('numeros-grid');
+  grid.style.gridTemplateColumns = `repeat(${Math.min(opcoes.length,5)},1fr)`;
+  grid.innerHTML = '';
+  opcoes.forEach(n => {
+    const btn = document.createElement('button');
+    btn.className = 'num-btn';
+    btn.textContent = n;
+    btn.addEventListener('click', () => responder(n, btn));
+    grid.appendChild(btn);
+  });
+}
+
+function responder(n, btn) {
+  if (bloqueado) return;
+  bloqueado = true;
+  if (n === quantCorreto) {
+    btn.classList.add('correta');
+    SFX.acerto(); pontos += 10; acertos++;
+    document.getElementById('score-badge').textContent = '⭐ ' + pontos;
+    document.getElementById('estrelas').textContent = '⭐'.repeat(Math.min(acertos,10));
+    confetti();
+    const MSGS = ['CERTO! 🎉','MUITO BEM! ⭐','INCRÍVEL! 🏆','PARABÉNS! 💫'];
+    document.getElementById('rf-ico').textContent = ['🌟','⭐','🏆','🎊'][Math.floor(Math.random()*4)];
+    document.getElementById('rf-txt').textContent = MSGS[Math.floor(Math.random()*MSGS.length)] + '\n' + quantCorreto + ' OBJETOS!';
+    document.getElementById('reforco').classList.add('show');
+    falar('Correto! ' + quantCorreto);
+    setTimeout(() => { document.getElementById('reforco').classList.remove('show'); proximaRodada(); }, 2000);
+  } else {
+    btn.classList.add('errada');
+    btn.addEventListener('animationend', () => btn.classList.remove('errada'), {once:true});
+    bloqueado = false;
+    // Dica: conta junto
+    document.querySelectorAll('.obj-item').forEach(o => o.classList.remove('contado'));
+    contados = 0;
+    document.getElementById('contagem-display').textContent = '?';
+    falar('Tente contar de novo');
+  }
+}
+
+function confetti() {
+  const ov = document.getElementById('confetti-overlay');
+  ['#f472b6','#facc15','#4ade80','#60a5fa','#fb923c'].forEach(c => {
+    for(let i=0;i<7;i++){
+      const p=document.createElement('div'); p.className='confetti-p';
+      p.style.left=Math.random()*100+'vw'; p.style.background=c;
+      p.style.animationDuration=(1.2+Math.random()*1.5)+'s';
+      p.style.animationDelay=Math.random()*0.4+'s';
+      ov.appendChild(p); setTimeout(()=>p.remove(),3000);
+    }
+  });
+}
+
+proximaRodada();
+</script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Arrasta Sílabas — AlfaPlay</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body { display:flex; flex-direction:column; min-height:100vh; }
+  .main { flex:1; padding:1.5rem 1rem; display:flex; flex-direction:column; align-items:center; gap:1.5rem; max-width:600px; margin:0 auto; width:100%; }
+  .palavra-area { width:100%; display:flex; flex-direction:column; align-items:center; gap:1rem; }
+  #btn-ouvir { font-size:1.5rem; padding:0.5em 1em; }
+  .hint { font-size:0.8rem; color:#64748b; text-align:center; }
+  .progress-wrap { width:100%; max-width:400px; }
+  #resultado-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100;
+    display:none; align-items:center; justify-content:center; flex-direction:column; gap:1.5rem;
+  }
+  #resultado-overlay.show { display:flex; }
+  #resultado-overlay .big { font-family:var(--pixel); font-size:clamp(1rem,4vw,2rem); text-align:center; }
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="index.html" class="btn btn-gray" style="font-size:0.8rem;">← VOLTAR</a>
+  <span class="pixel-title" style="color:#4ade80;">🧩 ARRASTA SÍLABAS</span>
+  <div class="score-badge" id="score-badge">⭐ 0</div>
+</header>
+
+<div class="main">
+  <div class="year-pills">
+    <button class="year-pill" data-ano="1" onclick="iniciar(1)">🟢 1º</button>
+    <button class="year-pill" data-ano="2" onclick="iniciar(2)">🔵 2º</button>
+    <button class="year-pill" data-ano="3" onclick="iniciar(3)">🩷 3º</button>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-wrap"><div class="progress-bar" id="progresso" style="width:0%"></div></div>
+  </div>
+  <p class="hint" id="rodada-info">Palavra 1 de 10</p>
+
+  <div class="palavra-area">
+    <div class="emoji-big" id="emoji-display">🎲</div>
+    <button class="btn btn-blue" id="btn-ouvir" onclick="ouvirPalavra()">🔊 OUVIR</button>
+    <p class="hint">Arraste as sílabas para montar a palavra</p>
+
+    <!-- Slots (destino) -->
+    <div class="slots-row" id="slots"></div>
+
+    <!-- Banco de sílabas -->
+    <div class="syllable-bank" id="banco"></div>
+  </div>
+
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+    <button class="btn btn-orange" onclick="dica()">💡 DICA</button>
+    <button class="btn btn-gray" onclick="pularPalavra()">⏭️ PULAR</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<div id="confetti-overlay"></div>
+
+<div id="resultado-overlay">
+  <div class="big" id="resultado-texto">🏆 FIM!</div>
+  <div class="score-badge" style="font-size:1rem;" id="resultado-score">⭐ 0</div>
+  <div style="display:flex;gap:1rem;">
+    <button class="btn btn-green" onclick="reiniciar()">🔄 JOGAR DE NOVO</button>
+    <a href="index.html" class="btn btn-gray">🏠 INÍCIO</a>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/sounds.js"></script>
+<script>
+let anoAtual = parseInt(new URLSearchParams(location.search).get('ano')) || 1;
+let fila = [], atual = null, pontos = 0, rodada = 0, total = 10;
+let slotsState = [], bancoDom = [];
+
+document.querySelectorAll('.year-pill').forEach(p => {
+  if (parseInt(p.dataset.ano) === anoAtual) p.classList.add('active');
+});
+
+function iniciar(ano) {
+  anoAtual = ano;
+  document.querySelectorAll('.year-pill').forEach(p =>
+    p.classList.toggle('active', parseInt(p.dataset.ano) === ano));
+  pontos = 0; rodada = 0;
+  document.getElementById('score-badge').textContent = '⭐ 0';
+  document.getElementById('resultado-overlay').classList.remove('show');
+  const pool = [...DATA[ano].palavras].sort(() => Math.random() - 0.5);
+  fila = pool.slice(0, total);
+  proximaPalavra();
+}
+
+function proximaPalavra() {
+  if (rodada >= fila.length) { fimJogo(); return; }
+  atual = fila[rodada];
+  slotsState = Array(atual.silabas.length).fill(null);
+  rodada++;
+  document.getElementById('emoji-display').textContent = atual.emoji;
+  document.getElementById('rodada-info').textContent = `Palavra ${rodada} de ${total}`;
+  document.getElementById('progresso').style.width = ((rodada-1)/total*100) + '%';
+  renderSlots();
+  renderBanco();
+  ouvirPalavra();
+}
+
+function renderSlots() {
+  const el = document.getElementById('slots');
+  el.innerHTML = '';
+  atual.silabas.forEach((_, i) => {
+    const s = document.createElement('div');
+    s.className = 'syllable-slot' + (slotsState[i] ? ' filled' : '');
+    s.textContent = slotsState[i] || '';
+    s.dataset.idx = i;
+    s.addEventListener('dragover', e => e.preventDefault());
+    s.addEventListener('drop', e => soltar(e, i));
+    // Touch
+    s.addEventListener('touchend', e => { e.preventDefault(); soltar(e, i); }, { passive:false });
+    el.appendChild(s);
+  });
+}
+
+function renderBanco() {
+  const el = document.getElementById('banco');
+  el.innerHTML = '';
+  const embaralhadas = silabsEmbaralhadas(atual);
+  bancoDom = embaralhadas.map((sil, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'syllable-chip';
+    chip.textContent = sil;
+    chip.dataset.sil = sil;
+    chip.dataset.bi = i;
+    chip.draggable = true;
+    chip.addEventListener('dragstart', e => { e.dataTransfer.setData('sil', sil); e.dataTransfer.setData('bi', i); chip.classList.add('dragging'); });
+    chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+    chip.addEventListener('click', () => colocarProximoSlot(sil, chip));
+    el.appendChild(chip);
+    return chip;
+  });
+}
+
+function soltar(e, slotIdx) {
+  const sil = e.dataTransfer ? e.dataTransfer.getData('sil') : window._dragSil;
+  if (!sil || slotsState[slotIdx]) return;
+  slotsState[slotIdx] = sil;
+  marcarUsada(sil);
+  renderSlots();
+  SFX.click();
+  if (slotsState.every(s => s)) verificar();
+}
+
+function colocarProximoSlot(sil, chip) {
+  const free = slotsState.findIndex(s => !s);
+  if (free === -1) return;
+  slotsState[free] = sil;
+  chip.classList.add('used');
+  renderSlots();
+  SFX.click();
+  if (slotsState.every(s => s)) verificar();
+}
+
+function marcarUsada(sil) {
+  const chip = bancoDom.find(c => c.dataset.sil === sil && !c.classList.contains('used'));
+  if (chip) chip.classList.add('used');
+}
+
+function verificar() {
+  const correta = slotsState.join('') === atual.silabas.join('');
+  const slots = document.querySelectorAll('.syllable-slot');
+  slots.forEach((s, i) => {
+    s.classList.add(slotsState[i] === atual.silabas[i] ? 'correct' : 'wrong');
+  });
+  if (correta) {
+    SFX.acerto(); pontos += 10;
+    document.getElementById('score-badge').textContent = '⭐ ' + pontos;
+    toast('🎉 CORRETO!', 'acerto');
+    falar(atual.palavra);
+    setTimeout(proximaPalavra, 1200);
+  } else {
+    SFX.erro();
+    toast('❌ TENTE NOVAMENTE!', 'erro');
+    setTimeout(() => {
+      slotsState = Array(atual.silabas.length).fill(null);
+      renderSlots(); renderBanco();
+    }, 1000);
+  }
+}
+
+function dica() {
+  // Revela primeira sílaba errada
+  for (let i = 0; i < atual.silabas.length; i++) {
+    if (slotsState[i] !== atual.silabas[i]) {
+      slotsState[i] = atual.silabas[i];
+      marcarUsada(atual.silabas[i]);
+      renderSlots(); SFX.flip();
+      toast('💡 DICA: ' + atual.silabas[i], 'info');
+      pontos = Math.max(0, pontos - 2);
+      document.getElementById('score-badge').textContent = '⭐ ' + pontos;
+      if (slotsState.every(s => s)) verificar();
+      return;
+    }
+  }
+}
+
+function pularPalavra() {
+  pontos = Math.max(0, pontos - 5);
+  document.getElementById('score-badge').textContent = '⭐ ' + pontos;
+  toast('⏭️ PULANDO...', 'info');
+  proximaPalavra();
+}
+
+function ouvirPalavra() { if (atual) falar(atual.palavra); }
+
+function fimJogo() {
+  SFX.vitoria(); confetti();
+  document.getElementById('resultado-texto').textContent = '🏆 PARABÉNS! VOCÊ COMPLETOU!';
+  document.getElementById('resultado-score').textContent = '⭐ ' + pontos + ' PONTOS';
+  document.getElementById('resultado-overlay').classList.add('show');
+  falar('Parabéns! Você completou todos os desafios!');
+}
+
+function reiniciar() { iniciar(anoAtual); }
+
+function toast(msg, tipo) {
+  const c = document.getElementById('toast-container');
+  const d = document.createElement('div');
+  d.className = 'toast ' + tipo;
+  d.textContent = msg;
+  c.appendChild(d);
+  setTimeout(() => d.remove(), 2100);
+}
+
+function confetti() {
+  const ov = document.getElementById('confetti-overlay');
+  const cores = ['#4ade80','#60a5fa','#f472b6','#facc15','#fb923c','#c084fc'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-p';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = cores[Math.floor(Math.random() * cores.length)];
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.animationDelay = Math.random() * 0.8 + 's';
+    ov.appendChild(p);
+    setTimeout(() => p.remove(), 3500);
+  }
+}
+
+iniciar(anoAtual);
+</script>
+</body>
+</html>

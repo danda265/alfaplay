@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AlfaPlay 🎮</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body { display:flex; flex-direction:column; min-height:100vh; }
+
+  /* Hero */
+  .hero {
+    text-align:center; padding: 3rem 1rem 2rem;
+  }
+  .logo-text {
+    font-family: var(--pixel);
+    font-size: clamp(1.5rem, 6vw, 3rem);
+    background: linear-gradient(135deg, #4ade80, #60a5fa, #f472b6, #facc15);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    display: inline-block;
+    filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.5));
+  }
+  .logo-sub {
+    font-family: var(--pixel); font-size: 0.55rem;
+    color: #94a3b8; margin-top: 0.8rem; letter-spacing: 2px;
+  }
+  .logo-icon { font-size: clamp(2.5rem, 8vw, 5rem); display:block; margin-bottom: 0.5rem; }
+
+  /* Year selector */
+  .section-title {
+    font-family: var(--pixel); font-size: 0.6rem;
+    color: #64748b; text-align:center;
+    margin: 2rem 0 1rem; letter-spacing: 2px;
+  }
+
+  /* Games grid */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+    gap: 1.2rem;
+    padding: 0 1.2rem 3rem;
+    max-width: 900px; margin: 0 auto; width: 100%;
+  }
+  .game-card {
+    background: var(--dark2);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.8rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    display: flex; flex-direction:column; align-items:center; gap: 0.8rem;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+  }
+  .game-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 0 rgba(0,0,0,0.3);
+  }
+  .game-card .game-icon { font-size: 3.5rem; line-height: 1; }
+  .game-card .game-name {
+    font-family: var(--pixel); font-size: 0.6rem;
+    line-height: 1.8;
+  }
+  .game-card .game-desc {
+    font-size: 0.78rem; color: #94a3b8; line-height: 1.4;
+  }
+  .game-card .game-badge {
+    font-family: var(--pixel); font-size: 0.45rem;
+    padding: 0.3em 0.8em; border-radius: 99px;
+    border: 1px solid currentColor;
+    margin-top: auto;
+  }
+
+  .game-card[data-game="memoria"]     { --accent: #60a5fa; border-color: #1e3a5f; }
+  .game-card[data-game="arrasta"]     { --accent: #4ade80; border-color: #14532d; }
+  .game-card[data-game="forca"]       { --accent: #f472b6; border-color: #500724; }
+  .game-card[data-game="ditado"]      { --accent: #facc15; border-color: #422006; }
+  .game-card[data-game="pintura"]     { --accent: #fb923c; border-color: #431407; }
+  .game-card[data-game="quebracabeca"]{ --accent: #c084fc; border-color: #3b0764; }
+
+  .game-card:hover { border-color: var(--accent); }
+  .game-card .game-badge { color: var(--accent); }
+
+  /* Footer */
+  footer {
+    margin-top: auto; text-align:center;
+    padding: 1.5rem; color: #475569;
+    font-size: 0.75rem; border-top: 1px solid var(--dark3);
+  }
+  footer span { color: #64748b; }
+
+  .especial-pill {
+    border-color: #3b82f6 !important;
+    color: #60a5fa !important;
+  }
+  .especial-pill.active {
+    background: rgba(96,165,250,.2) !important;
+    border-color: #60a5fa !important;
+    color: #fff !important;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <span class="logo-icon">🎮</span>
+  <div class="logo-text">AlfaPlay</div>
+  <div class="logo-sub">PORTAL DE JOGOS EDUCATIVOS</div>
+</div>
+
+<!-- Seletor de Ano -->
+<p class="section-title">⭐ ESCOLHA SEU ANO ⭐</p>
+<div class="year-pills" style="margin-bottom:0.5rem;">
+  <button class="year-pill active" data-ano="1" onclick="selecionarAno(1)">🟢 1º ANO</button>
+  <button class="year-pill" data-ano="2" onclick="selecionarAno(2)">🔵 2º ANO</button>
+  <button class="year-pill" data-ano="3" onclick="selecionarAno(3)">🩷 3º ANO</button>
+  <button class="year-pill especial-pill" id="pill-especial" onclick="selecionarEspecial(this)">💙 ESPECIAL</button>
+</div>
+<p class="section-title" id="ano-label" style="margin-top:0.5rem;">🎯 JOGOS DO 1º ANO</p>
+
+<!-- Jogos regulares -->
+<div id="secao-jogos">
+<div class="games-grid">
+  <a class="game-card" data-game="memoria" id="card-memoria" href="memoria.html?ano=1">
+    <div class="game-icon">🃏</div>
+    <div class="game-name">MEMÓRIA</div>
+    <div class="game-desc">Encontre os pares de palavras e figuras. Treina concentração!</div>
+    <span class="game-badge">🧠 MEMÓRIA VISUAL</span>
+  </a>
+
+  <a class="game-card" data-game="arrasta" id="card-arrasta" href="arrasta.html?ano=1">
+    <div class="game-icon">🧩</div>
+    <div class="game-name">ARRASTA SÍLABAS</div>
+    <div class="game-desc">Monte palavras arrastando as sílabas na ordem certa.</div>
+    <span class="game-badge">✍️ SÍLABAS</span>
+  </a>
+
+  <a class="game-card" data-game="forca" id="card-forca" href="forca.html?ano=1">
+    <div class="game-icon">🎪</div>
+    <div class="game-name">FORCA</div>
+    <div class="game-desc">Descubra a palavra ouvindo a dica. Letras escondidas!</div>
+    <span class="game-badge">🔤 LETRAS</span>
+  </a>
+
+  <a class="game-card" data-game="ditado" id="card-ditado" href="ditado.html?ano=1">
+    <div class="game-icon">🎧</div>
+    <div class="game-name">DITADO MÁGICO</div>
+    <div class="game-desc">Ouça a palavra e escreva corretamente. Com som!</div>
+    <span class="game-badge">👂 DITADO</span>
+  </a>
+
+  <a class="game-card" data-game="pintura" id="card-pintura" href="pintura.html?ano=1">
+    <div class="game-icon">🖌️</div>
+    <div class="game-name">PINTURA PIXEL</div>
+    <div class="game-desc">Pinte desenhos com pixel art. Criatividade total!</div>
+    <span class="game-badge">🎨 ARTE</span>
+  </a>
+
+  <a class="game-card" data-game="quebracabeca" id="card-quebracabeca" href="quebracabeca.html?ano=1">
+    <div class="game-icon">🔲</div>
+    <div class="game-name">QUEBRA-CABEÇA</div>
+    <div class="game-desc">Monte a figura clicando nas peças na ordem certa.</div>
+    <span class="game-badge">🔀 RACIOCÍNIO</span>
+  </a>
+</div>
+</div>
+
+<!-- Seção Especial (oculta por padrão) -->
+<div id="secao-especial" style="display:none;">
+  <div style="text-align:center;padding:.8rem 1rem;background:linear-gradient(135deg,#0f2044,#1a1040);border-bottom:2px solid #60a5fa;margin-bottom:1.5rem;">
+    <div style="font-size:2rem;margin-bottom:.3rem;">💙</div>
+    <div style="font-family:var(--pixel);font-size:.6rem;color:#60a5fa;margin-bottom:.3rem;">JOGOS INCLUSIVOS — TEA · TDAH · DOWN</div>
+    <div style="font-size:.8rem;color:#94a3b8;">Baseados em ABA, PECS e ensino estruturado. Sem pressão de tempo.</div>
+  </div>
+  <div class="games-grid">
+    <a class="game-card" href="esp_pareamento.html" style="--accent:#60a5fa;border-color:#1e3a5f;">
+      <div class="game-icon">🔍</div>
+      <div class="game-name">PAREAMENTO</div>
+      <div class="game-desc">Encontre a imagem igual. Treina discriminação visual.</div>
+      <span class="game-badge" style="color:#60a5fa;">TEA · DOWN · TDAH</span>
+    </a>
+    <a class="game-card" href="esp_comunicacao.html" style="--accent:#3b82f6;border-color:#1e3a5f;">
+      <div class="game-icon">🗣️</div>
+      <div class="game-name">PRANCHA PECS</div>
+      <div class="game-desc">Toque na imagem para se comunicar. Comunicação alternativa.</div>
+      <span class="game-badge" style="color:#3b82f6;">TEA · DOWN</span>
+    </a>
+    <a class="game-card" href="esp_sequencia.html" style="--accent:#4ade80;border-color:#14532d;">
+      <div class="game-icon">📋</div>
+      <div class="game-name">SEQUÊNCIA</div>
+      <div class="game-desc">Coloque as imagens na ordem certa. Rotina e raciocínio.</div>
+      <span class="game-badge" style="color:#4ade80;">TEA · TDAH · DOWN</span>
+    </a>
+    <a class="game-card" href="esp_contagem.html" style="--accent:#f472b6;border-color:#500724;">
+      <div class="game-icon">🔢</div>
+      <div class="game-name">CONTAGEM</div>
+      <div class="game-desc">Conte os objetos e toque no número certo.</div>
+      <span class="game-badge" style="color:#f472b6;">DOWN · TDAH</span>
+    </a>
+    <a class="game-card" href="esp_emocoes.html" style="--accent:#fb923c;border-color:#431407;">
+      <div class="game-icon">😊</div>
+      <div class="game-name">EMOÇÕES</div>
+      <div class="game-desc">Reconheça expressões faciais. Inteligência emocional.</div>
+      <span class="game-badge" style="color:#fb923c;">TEA · TDAH</span>
+    </a>
+    <a class="game-card" href="esp_palavra_imagem.html" style="--accent:#c084fc;border-color:#3b0764;">
+      <div class="game-icon">🖼️</div>
+      <div class="game-name">PALAVRA + IMAGEM</div>
+      <div class="game-desc">Associe imagem à palavra. Leitura global com sílabas.</div>
+      <span class="game-badge" style="color:#c084fc;">TEA · DOWN</span>
+    </a>
+  </div>
+</div>
+
+<footer>
+  AlfaPlay · Criado por <span>Anderson Rodrigo Costa</span> · © 2026
+</footer>
+
+<script>
+function selecionarAno(ano) {
+  document.querySelectorAll('.year-pill').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.year-pill[data-ano="${ano}"]`).classList.add('active');
+  document.getElementById('ano-label').textContent = `🎯 JOGOS DO ${ano}º ANO`;
+  document.getElementById('secao-jogos').style.display = '';
+  document.getElementById('secao-especial').style.display = 'none';
+
+  const jogos = ['memoria','arrasta','forca','ditado','pintura','quebracabeca'];
+  jogos.forEach(j => {
+    const card = document.getElementById(`card-${j}`);
+    card.href = `${j}.html?ano=${ano}`;
+  });
+}
+
+function selecionarEspecial(el) {
+  document.querySelectorAll('.year-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ano-label').textContent = '💙 ESPAÇO ESPECIAL';
+  document.getElementById('secao-jogos').style.display = 'none';
+  document.getElementById('secao-especial').style.display = '';
+}
+</script>
+</body>
+</html>

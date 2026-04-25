@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Memória — AlfaPlay</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body { display:flex; flex-direction:column; min-height:100vh; }
+  .main { flex:1; padding:1.2rem; display:flex; flex-direction:column; align-items:center; gap:1.2rem; }
+  #grid-wrap { display:flex; justify-content:center; }
+  .stats { display:flex; gap:1.2rem; flex-wrap:wrap; justify-content:center; }
+  .stat-box { background:var(--dark2); border:2px solid var(--border); border-radius:10px;
+    padding:0.5rem 1rem; text-align:center; }
+  .stat-box .val { font-family:var(--pixel); font-size:1.1rem; color:var(--yellow); }
+  .stat-box .lbl { font-size:0.7rem; color:#64748b; margin-top:2px; }
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="index.html" class="btn btn-gray" style="font-size:0.8rem;">← VOLTAR</a>
+  <span class="pixel-title" style="color:#60a5fa;">🃏 MEMÓRIA</span>
+  <div class="score-badge" id="score-badge">⭐ 0</div>
+</header>
+
+<div class="main">
+  <div class="stats">
+    <div class="stat-box"><div class="val" id="pares-val">0/6</div><div class="lbl">PARES</div></div>
+    <div class="stat-box"><div class="val" id="tentativas-val">0</div><div class="lbl">TENTATIVAS</div></div>
+    <div class="stat-box"><div class="val" id="tempo-val">0s</div><div class="lbl">TEMPO</div></div>
+  </div>
+
+  <div class="year-pills">
+    <button class="year-pill" data-ano="1" onclick="iniciar(1)">🟢 1º</button>
+    <button class="year-pill" data-ano="2" onclick="iniciar(2)">🔵 2º</button>
+    <button class="year-pill" data-ano="3" onclick="iniciar(3)">🩷 3º</button>
+  </div>
+
+  <div id="grid-wrap">
+    <div class="memory-grid" id="grid"></div>
+  </div>
+
+  <button class="btn btn-blue" onclick="iniciar(anoAtual)">🔄 NOVO JOGO</button>
+</div>
+
+<div id="toast-container"></div>
+<div id="confetti-overlay"></div>
+
+<script src="js/data.js"></script>
+<script src="js/sounds.js"></script>
+<script>
+let anoAtual = parseInt(new URLSearchParams(location.search).get('ano')) || 1;
+let cartas = [], viradas = [], pontos = 0, tentativas = 0, paresFound = 0;
+let bloqueado = false, timerInterval, segundos = 0;
+
+document.querySelectorAll('.year-pill').forEach(p => {
+  if (parseInt(p.dataset.ano) === anoAtual) p.classList.add('active');
+});
+
+function iniciar(ano) {
+  anoAtual = ano;
+  document.querySelectorAll('.year-pill').forEach(p =>
+    p.classList.toggle('active', parseInt(p.dataset.ano) === ano));
+
+  cartas = gerarPares(ano, 6);
+  viradas = []; pontos = 0; tentativas = 0; paresFound = 0;
+  bloqueado = false; segundos = 0;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    segundos++;
+    document.getElementById('tempo-val').textContent = segundos + 's';
+  }, 1000);
+  renderGrid();
+  atualizarStats();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const cols = Math.ceil(Math.sqrt(cartas.length));
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = '';
+  cartas.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'memory-card';
+    div.innerHTML = `
+      <div class="memory-card-inner">
+        <div class="memory-card-front">?</div>
+        <div class="memory-card-back">
+          <span>${c.emoji}</span>
+          <span class="mem-palavra">${c.palavra}</span>
+        </div>
+      </div>`;
+    div.addEventListener('click', () => virar(i, div));
+    grid.appendChild(div);
+  });
+}
+
+function virar(idx, el) {
+  if (bloqueado || cartas[idx].virado || cartas[idx].encontrado) return;
+  SFX.flip();
+  cartas[idx].virado = true;
+  el.classList.add('virado');
+  viradas.push({ idx, el });
+
+  if (viradas.length === 2) {
+    tentativas++;
+    bloqueado = true;
+    const [a, b] = viradas;
+    if (cartas[a.idx].palavra === cartas[b.idx].palavra) {
+      setTimeout(() => {
+        cartas[a.idx].encontrado = cartas[b.idx].encontrado = true;
+        a.el.classList.add('encontrado');
+        b.el.classList.add('encontrado');
+        SFX.acerto();
+        paresFound++;
+        pontos += 10 + Math.max(0, 5 - tentativas);
+        document.getElementById('score-badge').textContent = '⭐ ' + pontos;
+        toast('👏 PAR ENCONTRADO!', 'acerto');
+        viradas = []; bloqueado = false;
+        atualizarStats();
+        if (paresFound === 6) fimDeJogo();
+      }, 400);
+    } else {
+      setTimeout(() => {
+        cartas[a.idx].virado = cartas[b.idx].virado = false;
+        a.el.classList.remove('virado');
+        b.el.classList.remove('virado');
+        SFX.erro();
+        viradas = []; bloqueado = false;
+        atualizarStats();
+      }, 900);
+    }
+  }
+}
+
+function atualizarStats() {
+  document.getElementById('pares-val').textContent = paresFound + '/6';
+  document.getElementById('tentativas-val').textContent = tentativas;
+}
+
+function fimDeJogo() {
+  clearInterval(timerInterval);
+  SFX.vitoria();
+  confetti();
+  toast('🏆 PARABÉNS! VOCÊ GANHOU!', 'vitoria');
+  falar('Parabéns! Você encontrou todos os pares!');
+}
+
+function toast(msg, tipo = 'info') {
+  const c = document.getElementById('toast-container');
+  const d = document.createElement('div');
+  d.className = 'toast ' + tipo;
+  d.textContent = msg;
+  c.appendChild(d);
+  setTimeout(() => d.remove(), 2100);
+}
+
+function confetti() {
+  const ov = document.getElementById('confetti-overlay');
+  const cores = ['#4ade80','#60a5fa','#f472b6','#facc15','#fb923c','#c084fc'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-p';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = cores[Math.floor(Math.random() * cores.length)];
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.animationDelay = (Math.random() * 0.8) + 's';
+    ov.appendChild(p);
+    setTimeout(() => p.remove(), 3500);
+  }
+}
+
+iniciar(anoAtual);
+</script>
+</body>
+</html>

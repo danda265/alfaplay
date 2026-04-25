@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Prancha PECS — AlfaPlay Especial</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body{display:flex;flex-direction:column;min-height:100vh;background:#0a1628;}
+  .main{flex:1;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:640px;margin:0 auto;width:100%;}
+  .instrucao{background:var(--dark2);border:2px solid #3b82f6;border-radius:14px;padding:.8rem 1.2rem;text-align:center;width:100%;}
+  .instrucao .txt{font-size:1.05rem;color:#e2e8f0;font-weight:700;}
+  .instrucao .sub{font-size:.78rem;color:#64748b;margin-top:.2rem;}
+
+  /* Barra de frase montada */
+  .frase-barra{width:100%;min-height:80px;background:var(--dark3);border:3px solid #3b82f6;
+    border-radius:14px;display:flex;align-items:center;gap:.5rem;padding:.6rem;flex-wrap:wrap;
+    position:relative;}
+  .frase-barra .placeholder{font-family:var(--pixel);font-size:.45rem;color:#475569;width:100%;text-align:center;}
+  .frase-chip{display:flex;flex-direction:column;align-items:center;gap:2px;
+    background:var(--dark2);border:2px solid #60a5fa;border-radius:10px;
+    padding:.3rem .5rem;cursor:pointer;font-size:1.8rem;min-width:58px;}
+  .frase-chip .chip-txt{font-family:var(--pixel);font-size:.38rem;color:#60a5fa;}
+  .frase-chip:hover{border-color:#f87171;background:rgba(248,113,113,.1);}
+  .fala-btn{margin-left:auto;flex-shrink:0;}
+  .limpar-btn{font-size:.7rem;}
+
+  /* Grade PECS */
+  .categorias{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;}
+  .cat-btn{font-family:var(--pixel);font-size:.42rem;padding:.4em .9em;border-radius:99px;
+    border:2px solid var(--border);background:var(--dark3);color:var(--text);cursor:pointer;transition:all .15s;}
+  .cat-btn.ativo{border-color:#60a5fa;background:rgba(96,165,250,.15);color:#60a5fa;}
+
+  .pecs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.6rem;width:100%;}
+  .pecs-card{background:var(--dark2);border:3px solid var(--border);border-radius:14px;
+    padding:.6rem .4rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:.3rem;
+    transition:transform .1s,border-color .15s,background .15s;box-shadow:0 3px 0 rgba(0,0,0,.4);
+    min-height:90px;justify-content:center;}
+  .pecs-card:hover{transform:scale(1.07);border-color:#60a5fa;}
+  .pecs-card:active{transform:scale(.96);}
+  .pecs-card.selecionado{border-color:#4ade80;background:rgba(74,222,128,.12);animation:sel-pop .25s ease;}
+  @keyframes sel-pop{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
+  .pecs-emoji{font-size:2.6rem;line-height:1;}
+  .pecs-nome{font-family:var(--pixel);font-size:.38rem;color:#94a3b8;text-align:center;line-height:1.5;}
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="especial.html" class="btn btn-gray" style="font-size:.8rem;">← VOLTAR</a>
+  <span class="pixel-title" style="color:#60a5fa;">🗣️ PRANCHA PECS</span>
+  <div style="width:80px;"></div>
+</header>
+
+<div class="main">
+  <div class="instrucao">
+    <div class="txt">👆 Toque para ouvir · Monte uma frase</div>
+    <div class="sub">Toque nas imagens para se comunicar</div>
+  </div>
+
+  <!-- Frase montada -->
+  <div class="frase-barra" id="frase-barra">
+    <span class="placeholder">Toque nas imagens abaixo para montar uma frase...</span>
+  </div>
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;">
+    <button class="btn btn-blue" onclick="falarFrase()" style="font-size:.85rem;">🔊 FALAR FRASE</button>
+    <button class="btn btn-gray limpar-btn" onclick="limparFrase()">🗑️ LIMPAR</button>
+  </div>
+
+  <!-- Categorias -->
+  <div class="categorias" id="categorias"></div>
+
+  <!-- Grade de cartões -->
+  <div class="pecs-grid" id="pecs-grid"></div>
+</div>
+
+<script src="js/sounds.js"></script>
+<script>
+const CATEGORIAS = {
+  'EU': [
+    {e:'👦',n:'EU'},  {e:'👧',n:'ELA'}, {e:'👨',n:'ELE'}, {e:'👩‍🏫',n:'PROFESSORA'},
+    {e:'👨‍👩‍👦',n:'FAMÍLIA'},{e:'👫',n:'AMIGOS'},
+  ],
+  'QUERO': [
+    {e:'🍎',n:'MAÇÃ'},{e:'💧',n:'ÁGUA'},{e:'🍫',n:'CHOCOLATE'},{e:'🥤',n:'SUCO'},
+    {e:'🍞',n:'PÃO'}, {e:'🍌',n:'BANANA'},{e:'🍕',n:'PIZZA'},{e:'🎮',n:'JOGAR'},
+    {e:'📚',n:'LER'}, {e:'🖌️',n:'PINTAR'},{e:'🎵',n:'MÚSICA'},{e:'🚽',n:'BANHEIRO'},
+    {e:'😴',n:'DORMIR'},{e:'🤗',n:'ABRAÇO'},{e:'🏠',n:'CASA'},{e:'🚶',n:'PASSEAR'},
+  ],
+  'SINTO': [
+    {e:'😊',n:'FELIZ'},{e:'😢',n:'TRISTE'},{e:'😡',n:'BRAVO'},{e:'😨',n:'COM MEDO'},
+    {e:'🤢',n:'MAL'}, {e:'😴',n:'CANSADO'},{e:'🤒',n:'DOENTE'},{e:'🥰',n:'AMOR'},
+    {e:'😤',n:'FRUSTRADO'},{e:'🤩',n:'ANIMADO'},
+  ],
+  'LUGARES': [
+    {e:'🏫',n:'ESCOLA'},{e:'🏠',n:'CASA'},{e:'🏥',n:'MÉDICO'},{e:'🛒',n:'MERCADO'},
+    {e:'🌳',n:'PARQUE'},{e:'🚌',n:'ÔNIBUS'},{e:'⛪',n:'IGREJA'},{e:'🍽️',n:'RESTAURANTE'},
+  ],
+  'AÇÕES': [
+    {e:'🤲',n:'AJUDA'},{e:'🙏',n:'POR FAVOR'},{e:'😊',n:'OBRIGADO'},{e:'❌',n:'NÃO'},
+    {e:'✅',n:'SIM'},{e:'🔁',n:'DE NOVO'},{e:'⏸️',n:'PARAR'},{e:'➡️',n:'IR'},
+  ],
+};
+
+let frase = [];
+let catAtual = 'QUERO';
+
+// Monta categorias
+const catEl = document.getElementById('categorias');
+Object.keys(CATEGORIAS).forEach(cat => {
+  const b = document.createElement('button');
+  b.className = 'cat-btn' + (cat === catAtual ? ' ativo' : '');
+  b.textContent = cat;
+  b.onclick = () => {
+    catAtual = cat;
+    document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('ativo'));
+    b.classList.add('ativo');
+    renderGrid();
+    SFX.click();
+  };
+  catEl.appendChild(b);
+});
+
+function renderGrid() {
+  const grid = document.getElementById('pecs-grid');
+  grid.innerHTML = '';
+  CATEGORIAS[catAtual].forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'pecs-card';
+    card.innerHTML = `<div class="pecs-emoji">${item.e}</div><div class="pecs-nome">${item.n}</div>`;
+    card.onclick = () => selecionarItem(item, card);
+    grid.appendChild(card);
+  });
+}
+
+function selecionarItem(item, card) {
+  falar(item.n);
+  SFX.click();
+  card.classList.add('selecionado');
+  setTimeout(() => card.classList.remove('selecionado'), 400);
+  frase.push(item);
+  renderFrase();
+}
+
+function renderFrase() {
+  const barra = document.getElementById('frase-barra');
+  if (!frase.length) {
+    barra.innerHTML = '<span class="placeholder">Toque nas imagens abaixo para montar uma frase...</span>';
+    return;
+  }
+  barra.innerHTML = '';
+  frase.forEach((item, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'frase-chip';
+    chip.innerHTML = `<span>${item.e}</span><span class="chip-txt">${item.n}</span>`;
+    chip.title = 'Remover';
+    chip.onclick = () => { frase.splice(i,1); renderFrase(); };
+    barra.appendChild(chip);
+  });
+}
+
+function falarFrase() {
+  if (!frase.length) return;
+  const txt = frase.map(i => i.n).join(' ');
+  falar(txt, 0.85);
+  SFX.nivel();
+}
+
+function limparFrase() {
+  frase = [];
+  renderFrase();
+  SFX.flip();
+}
+
+renderGrid();
+</script>
+</body>
+</html>

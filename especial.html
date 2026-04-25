@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Espaço Especial — AlfaPlay</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body{display:flex;flex-direction:column;min-height:100vh;background:#0a1628;}
+  .hero{text-align:center;padding:2.5rem 1rem 1.5rem;}
+  .esp-title{font-family:var(--pixel);font-size:clamp(.9rem,3vw,1.4rem);color:#60a5fa;text-shadow:2px 2px 0 #000;line-height:2;}
+  .esp-sub{font-size:.85rem;color:#94a3b8;margin-top:.5rem;max-width:520px;margin-inline:auto;line-height:1.7;}
+  /* Perfis */
+  .perfis{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;padding:.5rem 1rem;}
+  .perfil-card{background:var(--dark2);border:2px solid var(--border);border-radius:14px;padding:1rem 1.2rem;
+    max-width:260px;flex:1;min-width:200px;}
+  .perfil-icon{font-size:2rem;margin-bottom:.5rem;}
+  .perfil-nome{font-family:var(--pixel);font-size:.55rem;margin-bottom:.5rem;}
+  .perfil-desc{font-size:.78rem;color:#94a3b8;line-height:1.5;}
+  /* Jogos */
+  .esp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));
+    gap:1.2rem;padding:1rem 1.2rem 3rem;max-width:860px;margin:0 auto;width:100%;}
+  .esp-card{background:var(--dark2);border:2px solid var(--border);border-radius:16px;
+    padding:1.5rem 1rem;text-align:center;cursor:pointer;text-decoration:none;color:var(--text);
+    transition:transform .15s,box-shadow .15s;display:flex;flex-direction:column;align-items:center;gap:.7rem;
+    box-shadow:0 4px 0 rgba(0,0,0,.3);}
+  .esp-card:hover{transform:translateY(-5px);box-shadow:0 9px 0 rgba(0,0,0,.3);}
+  .esp-card .ico{font-size:3.2rem;}
+  .esp-card .nm{font-family:var(--pixel);font-size:.58rem;line-height:1.8;}
+  .esp-card .ds{font-size:.78rem;color:#94a3b8;line-height:1.4;}
+  .esp-card .tags{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center;margin-top:auto;}
+  .tag{font-family:var(--pixel);font-size:.38rem;padding:.25em .6em;border-radius:99px;border:1px solid currentColor;}
+  .tag-tea{color:#60a5fa;} .tag-tdah{color:#4ade80;} .tag-down{color:#f472b6;}
+  .esp-card:hover{border-color:#60a5fa;}
+  .sec-title{font-family:var(--pixel);font-size:.55rem;color:#475569;text-align:center;
+    margin:1.5rem 0 .8rem;letter-spacing:2px;}
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="index.html" class="btn btn-gray" style="font-size:.8rem;">← INÍCIO</a>
+  <span class="pixel-title" style="color:#60a5fa;">🌟 ESPAÇO ESPECIAL</span>
+  <div style="width:80px;"></div>
+</header>
+
+<div class="hero">
+  <div class="esp-title">💙 JOGOS INCLUSIVOS 💙</div>
+  <p class="esp-sub">Atividades adaptadas com base em métodos científicos de alfabetização inclusiva: <strong style="color:#60a5fa;">ABA</strong> (reforço positivo), <strong style="color:#4ade80;">PECS</strong> (comunicação por imagens) e <strong style="color:#f472b6;">ensino estruturado TEACCH</strong>. Sem pressão de tempo. Sem punição. No ritmo de cada criança.</p>
+</div>
+
+<!-- Perfis -->
+<p class="sec-title">👤 PARA QUEM É?</p>
+<div class="perfis">
+  <div class="perfil-card" style="border-color:#3b82f6;">
+    <div class="perfil-icon">🔵</div>
+    <div class="perfil-nome" style="color:#60a5fa;">TEA — AUTISMO</div>
+    <div class="perfil-desc">Atividades visuais, previsíveis e estruturadas. Baseadas em PECS e ABA: 1 instrução por vez, reforço imediato a cada acerto, sem surpresas.</div>
+  </div>
+  <div class="perfil-card" style="border-color:#22c55e;">
+    <div class="perfil-icon">🟢</div>
+    <div class="perfil-nome" style="color:#4ade80;">TDAH</div>
+    <div class="perfil-desc">Tarefas curtas com recompensa imediata, alta interatividade e estímulo visual. Mantém o foco sem sobrecarregar a atenção.</div>
+  </div>
+  <div class="perfil-card" style="border-color:#ec4899;">
+    <div class="perfil-icon">🩷</div>
+    <div class="perfil-nome" style="color:#f472b6;">SÍNDROME DE DOWN</div>
+    <div class="perfil-desc">Explora a forte memória visual, repetição positiva e associação imagem-palavra com ritmo e música. Alvos grandes e claros.</div>
+  </div>
+</div>
+
+<!-- Jogos -->
+<p class="sec-title">🎮 ATIVIDADES</p>
+<div class="esp-grid">
+
+  <a class="esp-card" href="esp_pareamento.html">
+    <div class="ico">🔍</div>
+    <div class="nm">PAREAMENTO</div>
+    <div class="ds">Encontre a imagem igual. Treina discriminação visual — habilidade fundamental para leitura.</div>
+    <div class="tags">
+      <span class="tag tag-tea">TEA</span>
+      <span class="tag tag-down">DOWN</span>
+      <span class="tag tag-tdah">TDAH</span>
+    </div>
+  </a>
+
+  <a class="esp-card" href="esp_comunicacao.html">
+    <div class="ico">🗣️</div>
+    <div class="nm">PRANCHA PECS</div>
+    <div class="ds">Toque na imagem para ouvir a palavra. Comunicação aumentativa e alternativa baseada em PECS.</div>
+    <div class="tags">
+      <span class="tag tag-tea">TEA</span>
+      <span class="tag tag-down">DOWN</span>
+    </div>
+  </a>
+
+  <a class="esp-card" href="esp_sequencia.html">
+    <div class="ico">📋</div>
+    <div class="nm">SEQUÊNCIA</div>
+    <div class="ds">Coloque as imagens na ordem certa. Desenvolve raciocínio lógico e noção de rotina.</div>
+    <div class="tags">
+      <span class="tag tag-tea">TEA</span>
+      <span class="tag tag-tdah">TDAH</span>
+      <span class="tag tag-down">DOWN</span>
+    </div>
+  </a>
+
+  <a class="esp-card" href="esp_contagem.html">
+    <div class="ico">🔢</div>
+    <div class="nm">CONTAGEM</div>
+    <div class="ds">Conte os objetos e toque no número certo. Concreto, visual e com som a cada toque.</div>
+    <div class="tags">
+      <span class="tag tag-down">DOWN</span>
+      <span class="tag tag-tdah">TDAH</span>
+    </div>
+  </a>
+
+  <a class="esp-card" href="esp_emocoes.html">
+    <div class="ico">😊</div>
+    <div class="nm">EMOÇÕES</div>
+    <div class="ds">Reconheça e nomeie expressões faciais. Desenvolve inteligência emocional e vocabulário afetivo.</div>
+    <div class="tags">
+      <span class="tag tag-tea">TEA</span>
+      <span class="tag tag-tdah">TDAH</span>
+    </div>
+  </a>
+
+  <a class="esp-card" href="esp_palavra_imagem.html">
+    <div class="ico">🖼️</div>
+    <div class="nm">PALAVRA + IMAGEM</div>
+    <div class="ds">Associe a imagem à palavra escrita. Leitura global — método eficaz para Down e TEA.</div>
+    <div class="tags">
+      <span class="tag tag-tea">TEA</span>
+      <span class="tag tag-down">DOWN</span>
+    </div>
+  </a>
+
+</div>
+
+<footer style="margin-top:auto;text-align:center;padding:1.5rem;color:#475569;font-size:.75rem;border-top:1px solid var(--dark3);">
+  AlfaPlay Inclusivo · <span style="color:#60a5fa;">Anderson Rodrigo Costa</span> · © 2026
+</footer>
+</body>
+</html>
