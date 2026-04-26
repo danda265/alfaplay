@@ -257,7 +257,7 @@ canvas{display:block;}
 
 // ─── THREE GLOBAIS ───────────────────────────────────────
 let renderer, scene, camera, clock;
-const raycasterDown = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0,-1,0), 0, 6);
+let raycasterDown;  // inicializado em initThree() após Three.js carregar
 const walkables  = [];   // superfícies andáveis
 const wallBoxes  = [];   // colisores de parede (THREE.Box3)
 const enemies    = [];
@@ -324,6 +324,13 @@ function initThree() {
 
   camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.1, 80);
   clock  = new THREE.Clock();
+  raycasterDown = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0,-1,0), 0, 6);
+  MAT = {
+    stone: new THREE.MeshStandardMaterial({map:mkTex('#52525e','#28283a',2), roughness:.9,metalness:.05}),
+    floor: new THREE.MeshStandardMaterial({map:mkTex('#3a3a46','#20202e',8), roughness:1,metalness:0}),
+    wood:  new THREE.MeshStandardMaterial({color:0x5a3210,roughness:.9}),
+    moss:  new THREE.MeshStandardMaterial({color:0x2d4a1e,roughness:1}),
+  };
 
   window.addEventListener('resize', () => {
     renderer.setSize(innerWidth, innerHeight);
@@ -349,12 +356,7 @@ function mkTex(c1, c2, rep=4) {
   return t;
 }
 
-const MAT = {
-  stone:  new THREE.MeshStandardMaterial({map:mkTex('#52525e','#28283a',2), roughness:.9,metalness:.05}),
-  floor:  new THREE.MeshStandardMaterial({map:mkTex('#3a3a46','#20202e',8), roughness:1,metalness:0}),
-  wood:   new THREE.MeshStandardMaterial({color:0x5a3210,roughness:.9}),
-  moss:   new THREE.MeshStandardMaterial({color:0x2d4a1e,roughness:1}),
-};
+let MAT;  // inicializado em initThree() após Three.js carregar
 
 function addBox(x,y,z,w,h,d,mat,isWall=false,isFloor=false) {
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
