@@ -102,6 +102,19 @@
     border-color: #60a5fa !important;
     color: #fff !important;
   }
+  .quest-pill {
+    border-color: #7c3aed !important;
+    color: #a78bfa !important;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .quest-pill:hover {
+    background: rgba(124,58,237,.2) !important;
+    border-color: #a78bfa !important;
+    color: #fff !important;
+    transform: scale(1.05);
+  }
 </style>
 </head>
 <body>
@@ -119,6 +132,7 @@
   <button class="year-pill" data-ano="2" onclick="selecionarAno(2)">🔵 2º ANO</button>
   <button class="year-pill" data-ano="3" onclick="selecionarAno(3)">🩷 3º ANO</button>
   <button class="year-pill especial-pill" id="pill-especial" onclick="selecionarEspecial(this)">💙 ESPECIAL</button>
+  <a href="aventura.html" class="year-pill quest-pill">⚔️ QUEST 5-9</a>
 </div>
 <p class="section-title" id="ano-label" style="margin-top:0.5rem;">🎯 JOGOS DO 1º ANO</p>
 
@@ -167,19 +181,6 @@
     <span class="game-badge">🔀 RACIOCÍNIO</span>
   </a>
 </div>
-</div>
-
-<!-- Seção AlfaQuest -->
-<div style="padding:0 1.2rem 1rem;max-width:900px;margin:0 auto;">
-  <p class="section-title" style="margin-top:0;">⚔️ AVENTURA · 5º AO 9º ANO</p>
-  <a href="aventura.html" style="display:flex;align-items:center;gap:1.2rem;background:linear-gradient(135deg,#1a0a3d,#0f1628);border:2px solid #7c3aed;border-radius:16px;padding:1.5rem;text-decoration:none;color:var(--text);transition:transform .15s,box-shadow .15s;box-shadow:0 4px 0 rgba(0,0,0,.3);" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
-    <div style="font-size:3rem;flex-shrink:0;">⚔️</div>
-    <div>
-      <div style="font-family:var(--pixel);font-size:.7rem;color:#a78bfa;margin-bottom:.4rem;">ALFAQUEST — AVENTURA DO CONHECIMENTO</div>
-      <div style="font-size:.85rem;color:#cbd5e1;line-height:1.5;">RPG educativo para 5º ao 9º ano! Derrote inimigos respondendo perguntas de Matemática, Português, Ciências e História. Fases por matéria, XP e chefes finais!</div>
-    </div>
-    <div style="font-family:var(--pixel);font-size:.55rem;color:#a78bfa;flex-shrink:0;margin-left:auto;">JOGAR →</div>
-  </a>
 </div>
 
 <!-- Seção Especial (oculta por padrão) -->
