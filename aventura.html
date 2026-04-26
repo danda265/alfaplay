@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AlfaQuest ⚔️ Aventura do Conhecimento</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#060d1a;color:#e2e8f0;font-family:sans-serif;min-height:100vh;overflow-x:hidden;}
+  .screen{display:none;flex-direction:column;align-items:center;min-height:100vh;width:100%;}
+  .screen.ativo{display:flex;}
+
+  /* ===== TÍTULO ===== */
+  #s-titulo{background:radial-gradient(ellipse at center,#0f1e3d 0%,#060d1a 70%);
+    justify-content:center;gap:1.2rem;padding:2rem 1rem;position:relative;overflow:hidden;}
+  .stars{position:absolute;inset:0;pointer-events:none;}
+  .star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:twinkle 3s infinite;}
+  @keyframes twinkle{0%,100%{opacity:.2}50%{opacity:1}}
+  .quest-logo{font-family:var(--pixel);font-size:clamp(1.2rem,5vw,2.2rem);
+    background:linear-gradient(135deg,#facc15,#fb923c,#f472b6);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    text-shadow:none;filter:drop-shadow(0 0 20px rgba(250,204,21,.4));text-align:center;}
+  .quest-sub{font-family:var(--pixel);font-size:.5rem;color:#60a5fa;letter-spacing:3px;text-align:center;}
+  .quest-hero{font-size:clamp(4rem,15vw,8rem);animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .btn-start{font-family:var(--pixel);font-size:.7rem;padding:.8em 2.5em;
+    background:linear-gradient(135deg,#7c3aed,#4f46e5);
+    border:3px solid #a78bfa;border-radius:99px;color:#fff;cursor:pointer;
+    box-shadow:0 0 20px rgba(124,58,237,.5);transition:all .15s;letter-spacing:2px;}
+  .btn-start:hover{transform:scale(1.08);box-shadow:0 0 30px rgba(124,58,237,.8);}
+  .save-info{font-family:var(--pixel);font-size:.38rem;color:#475569;text-align:center;}
+
+  /* ===== SELEÇÃO DE HERÓI ===== */
+  #s-heroi{background:#060d1a;justify-content:flex-start;padding:2rem 1rem;gap:1rem;}
+  .heroi-titulo{font-family:var(--pixel);font-size:.8rem;color:#facc15;text-align:center;letter-spacing:2px;}
+  .herois-grid{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;width:100%;}
+  .heroi-card{background:#0f1e3d;border:3px solid #1e3a5f;border-radius:18px;
+    padding:1.5rem 1rem;text-align:center;cursor:pointer;flex:1;min-width:140px;max-width:180px;
+    transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:.6rem;}
+  .heroi-card:hover,.heroi-card.sel{border-color:#facc15;background:rgba(250,204,21,.08);
+    transform:translateY(-6px);}
+  .heroi-e{font-size:3.5rem;}
+  .heroi-n{font-family:var(--pixel);font-size:.55rem;color:#e2e8f0;}
+  .heroi-classe{font-family:var(--pixel);font-size:.38rem;color:#94a3b8;}
+  .heroi-poder{font-size:.75rem;color:#4ade80;margin-top:.2rem;}
+
+  /* ===== MAPA ===== */
+  #s-mapa{background:radial-gradient(ellipse at top,#0f1e3d,#060d1a);
+    padding:1rem;gap:1rem;min-height:100vh;}
+  .mapa-header{display:flex;align-items:center;gap:.8rem;width:100%;max-width:600px;}
+  .heroi-status{display:flex;align-items:center;gap:.6rem;background:#0f1e3d;
+    border:2px solid #1e3a5f;border-radius:12px;padding:.5rem .8rem;flex:1;}
+  .hs-emoji{font-size:1.8rem;}
+  .hs-info{display:flex;flex-direction:column;gap:.1rem;}
+  .hs-nome{font-family:var(--pixel);font-size:.42rem;color:#e2e8f0;}
+  .hs-xp{font-family:var(--pixel);font-size:.35rem;color:#facc15;}
+  .hs-hp-bar{height:6px;background:#1e3a5f;border-radius:3px;overflow:hidden;width:80px;}
+  .hs-hp-fill{height:100%;background:linear-gradient(90deg,#4ade80,#22c55e);border-radius:3px;transition:width .3s;}
+
+  .mundos-lista{display:flex;flex-direction:column;gap:.8rem;width:100%;max-width:600px;}
+  .mundo-card{background:#0f1e3d;border:2px solid #1e3a5f;border-radius:16px;
+    padding:.8rem 1rem;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+  .mundo-card.desbloqueado:hover{transform:translateX(4px);border-color:var(--mc);}
+  .mundo-card.bloqueado{opacity:.4;cursor:not-allowed;filter:grayscale(1);}
+  .mundo-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mc);}
+  .mc-header{display:flex;align-items:center;gap:.8rem;}
+  .mc-emoji{font-size:2rem;}
+  .mc-info{flex:1;}
+  .mc-nome{font-family:var(--pixel);font-size:.55rem;color:var(--mc);}
+  .mc-sub{font-size:.75rem;color:#64748b;margin-top:.2rem;}
+  .mc-progress{font-family:var(--pixel);font-size:.38rem;color:#475569;}
+  .mc-lock{font-size:1.5rem;color:#475569;}
+
+  /* ===== SELEÇÃO DE FASE ===== */
+  #s-fases{background:#060d1a;padding:1rem;gap:1rem;min-height:100vh;}
+  .fases-header{display:flex;align-items:center;gap:.8rem;width:100%;max-width:560px;}
+  .fases-titulo{font-family:var(--pixel);font-size:.7rem;text-align:center;width:100%;}
+  .fases-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem;width:100%;max-width:560px;}
+  .fase-card{background:#0f1e3d;border:2px solid #1e3a5f;border-radius:14px;
+    padding:1rem;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;
+    align-items:center;gap:.5rem;min-height:130px;justify-content:center;position:relative;}
+  .fase-card:hover:not(.bloqueada){transform:scale(1.04);border-color:var(--fc);}
+  .fase-card.boss-card{border-color:#ef4444;background:rgba(239,68,68,.08);}
+  .fase-card.boss-card:hover{border-color:#f87171;}
+  .fase-card.bloqueada{opacity:.35;cursor:not-allowed;}
+  .fase-card.completa::after{content:'✅';position:absolute;top:6px;right:8px;font-size:1rem;}
+  .fc-emoji{font-size:2.5rem;}
+  .fc-nome{font-family:var(--pixel);font-size:.42rem;text-align:center;color:var(--fc);}
+  .fc-mat{font-size:.7rem;color:#94a3b8;text-align:center;}
+  .fc-hp{font-family:var(--pixel);font-size:.35rem;color:#ef4444;}
+
+  /* ===== BATALHA ===== */
+  #s-batalha{background:#060d1a;padding:.8rem;gap:.6rem;min-height:100vh;justify-content:flex-start;}
+
+  .bat-header{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:560px;}
+  .bat-fase{font-family:var(--pixel);font-size:.42rem;color:#64748b;}
+  .bat-materia{font-family:var(--pixel);font-size:.42rem;color:#facc15;text-align:center;}
+  .bat-back{font-family:var(--pixel);font-size:.35rem;color:#475569;cursor:pointer;
+    background:none;border:1px solid #1e3a5f;border-radius:6px;padding:.3em .6em;}
+
+  /* Arena */
+  .arena{width:100%;max-width:560px;background:#0a1628;border:2px solid #1e3a5f;
+    border-radius:16px;padding:1rem;display:flex;flex-direction:column;gap:.8rem;}
+  .combatentes{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;}
+
+  .combatente{display:flex;flex-direction:column;align-items:center;gap:.4rem;flex:1;}
+  .comb-sprite{font-size:clamp(3rem,12vw,5rem);line-height:1;
+    transition:transform .1s;filter:drop-shadow(0 0 8px rgba(255,255,255,.1));}
+  .comb-sprite.atacando{animation:ataque .35s ease;}
+  .comb-sprite.levando-dano{animation:dano .3s ease;}
+  @keyframes ataque{0%{transform:scale(1)}30%{transform:scale(1.3) translateX(8px)}100%{transform:scale(1)}}
+  @keyframes dano{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}60%{transform:translateX(8px)}}
+
+  .comb-nome{font-family:var(--pixel);font-size:.38rem;color:#94a3b8;text-align:center;}
+  .hp-bar-wrap{width:100%;display:flex;flex-direction:column;gap:2px;}
+  .hp-label{font-family:var(--pixel);font-size:.32rem;color:#64748b;display:flex;justify-content:space-between;}
+  .hp-bar{height:10px;background:#1e3a5f;border-radius:5px;overflow:hidden;}
+  .hp-fill{height:100%;border-radius:5px;transition:width .4s ease;min-width:2px;}
+  .hp-fill.heroi{background:linear-gradient(90deg,#4ade80,#22c55e);}
+  .hp-fill.inimigo{background:linear-gradient(90deg,#ef4444,#dc2626);}
+  .hp-fill.critico{background:linear-gradient(90deg,#facc15,#f59e0b);}
+
+  .vs-badge{font-family:var(--pixel);font-size:.6rem;color:#374151;align-self:center;flex-shrink:0;}
+
+  /* Pergunta */
+  .pergunta-area{width:100%;max-width:560px;}
+  .pergunta-box{background:#0f1e3d;border:2px solid #1e3a5f;border-radius:14px;
+    padding:1rem;margin-bottom:.8rem;}
+  .perg-num{font-family:var(--pixel);font-size:.35rem;color:#475569;margin-bottom:.4rem;}
+  .perg-txt{font-size:.9rem;color:#e2e8f0;line-height:1.5;font-weight:600;}
+
+  .opcoes-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;width:100%;max-width:560px;}
+  .opcao-btn{background:#0f1e3d;border:2px solid #1e3a5f;border-radius:12px;
+    padding:.7rem .6rem;cursor:pointer;font-size:.82rem;color:#cbd5e1;
+    display:flex;align-items:center;gap:.5rem;transition:all .12s;
+    box-shadow:0 3px 0 rgba(0,0,0,.4);text-align:left;line-height:1.3;}
+  .opcao-btn:hover:not(:disabled){border-color:#60a5fa;background:rgba(96,165,250,.1);
+    transform:translateY(-2px);}
+  .opcao-btn:disabled{cursor:not-allowed;}
+  .opcao-btn.correta{border-color:#4ade80;background:rgba(74,222,128,.15);animation:pop .3s ease;}
+  .opcao-btn.errada{border-color:#f87171;background:rgba(248,113,113,.15);animation:shake .3s ease;}
+  .op-letra{font-family:var(--pixel);font-size:.4rem;color:#60a5fa;
+    background:#1e3a5f;border-radius:4px;padding:.2em .4em;flex-shrink:0;}
+  @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+  /* Feedback flash */
+  .dano-flash{position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;transition:opacity .2s;}
+  .dano-flash.verde{background:rgba(74,222,128,.15);}
+  .dano-flash.vermelho{background:rgba(248,113,113,.2);}
+  .dano-flash.show{opacity:1;}
+
+  /* ===== VITÓRIA / DERROTA ===== */
+  #s-vitoria,#s-derrota{justify-content:center;padding:2rem 1rem;gap:1rem;}
+  #s-vitoria{background:radial-gradient(ellipse at center,#052e16,#060d1a);}
+  #s-derrota{background:radial-gradient(ellipse at center,#1c0a0a,#060d1a);}
+  .result-ico{font-size:clamp(4rem,15vw,7rem);animation:pop .5s ease;}
+  .result-txt{font-family:var(--pixel);font-size:clamp(.7rem,3vw,1.1rem);text-align:center;line-height:2;}
+  .xp-ganho{font-family:var(--pixel);font-size:.6rem;color:#facc15;text-align:center;}
+  .result-btns{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;}
+
+  /* Botões gerais */
+  .btn-rpg{font-family:var(--pixel);font-size:.55rem;padding:.7em 1.8em;border-radius:99px;
+    border:2px solid;cursor:pointer;transition:all .15s;letter-spacing:1px;}
+  .btn-verde{background:rgba(74,222,128,.15);border-color:#4ade80;color:#4ade80;}
+  .btn-verde:hover{background:rgba(74,222,128,.3);transform:scale(1.05);}
+  .btn-azul{background:rgba(96,165,250,.15);border-color:#60a5fa;color:#60a5fa;}
+  .btn-azul:hover{background:rgba(96,165,250,.3);transform:scale(1.05);}
+  .btn-roxo{background:rgba(167,139,250,.15);border-color:#a78bfa;color:#a78bfa;}
+  .btn-roxo:hover{background:rgba(167,139,250,.3);transform:scale(1.05);}
+  .btn-cinza{background:rgba(100,116,139,.15);border-color:#475569;color:#64748b;}
+  .btn-cinza:hover{background:rgba(100,116,139,.3);transform:scale(1.05);}
+
+  /* Reforço overlay */
+  #overlay-reforco{position:fixed;inset:0;z-index:200;display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:.8rem;
+    background:rgba(0,0,0,.85);}
+  #overlay-reforco.show{display:flex;}
+  .rf-grande{font-size:5rem;animation:pop .4s ease;}
+  .rf-msg{font-family:var(--pixel);font-size:clamp(.7rem,3vw,1.1rem);
+    color:#facc15;text-shadow:3px 3px 0 #000;text-align:center;line-height:1.8;}
+
+  /* confetti */
+  #confetti-overlay{position:fixed;inset:0;pointer-events:none;z-index:300;}
+  .confetti-p{position:absolute;width:8px;height:8px;border-radius:2px;
+    animation:confetti-fall linear forwards;}
+  @keyframes confetti-fall{0%{top:-10px;opacity:1}100%{top:110vh;opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- Flash de dano -->
+<div class="dano-flash" id="dano-flash"></div>
+<div id="confetti-overlay"></div>
+
+<!-- ===== TELA: TÍTULO ===== -->
+<div id="s-titulo" class="screen ativo">
+  <div class="stars" id="stars-bg"></div>
+  <div class="quest-hero" id="titulo-heroi">⚔️</div>
+  <div class="quest-logo">AlfaQuest</div>
+  <div class="quest-sub">AVENTURA DO CONHECIMENTO</div>
+  <p style="font-size:.82rem;color:#64748b;text-align:center;max-width:340px;line-height:1.6;margin-top:.3rem;">
+    Explore mundos, derrote inimigos respondendo perguntas<br>e torne-se o Guardião do Saber!
+  </p>
+  <button class="btn-start" onclick="irParaHeroi()">▶ COMEÇAR AVENTURA</button>
+  <div class="save-info" id="save-info"></div>
+  <a href="index.html" style="font-family:var(--pixel);font-size:.38rem;color:#334155;text-decoration:none;margin-top:.5rem;">← VOLTAR AO PORTAL</a>
+</div>
+
+<!-- ===== TELA: ESCOLHER HERÓI ===== -->
+<div id="s-heroi" class="screen">
+  <div class="heroi-titulo">⚔️ ESCOLHA SEU HERÓI</div>
+  <p style="font-size:.82rem;color:#64748b;text-align:center;">Cada herói tem um estilo diferente</p>
+  <div class="herois-grid">
+    <div class="heroi-card" onclick="selecionarHeroi(0,this)">
+      <div class="heroi-e">🧙</div>
+      <div class="heroi-n">ÉLIO</div>
+      <div class="heroi-classe">Mago do Saber</div>
+      <div class="heroi-poder">✨ Especialista em Ciências</div>
+    </div>
+    <div class="heroi-card" onclick="selecionarHeroi(1,this)">
+      <div class="heroi-e">⚔️</div>
+      <div class="heroi-n">KAIA</div>
+      <div class="heroi-classe">Guerreira Destemida</div>
+      <div class="heroi-poder">❤️ +1 de vida extra</div>
+    </div>
+    <div class="heroi-card" onclick="selecionarHeroi(2,this)">
+      <div class="heroi-e">🏹</div>
+      <div class="heroi-n">LUNA</div>
+      <div class="heroi-classe">Arqueira Estudiosa</div>
+      <div class="heroi-poder">📚 Especialista em História</div>
+    </div>
+  </div>
+  <button class="btn-rpg btn-verde" onclick="confirmarHeroi()" id="btn-confirmar-heroi" style="opacity:.4;pointer-events:none;">
+    CONFIRMAR HERÓI ▶
+  </button>
+</div>
+
+<!-- ===== TELA: MAPA ===== -->
+<div id="s-mapa" class="screen">
+  <div class="mapa-header">
+    <div class="heroi-status" id="heroi-status-mapa"></div>
+  </div>
+  <div style="font-family:var(--pixel);font-size:.55rem;color:#64748b;letter-spacing:2px;text-align:center;">
+    🗺️ ESCOLHA SEU DESTINO
+  </div>
+  <div class="mundos-lista" id="mundos-lista"></div>
+</div>
+
+<!-- ===== TELA: FASES ===== -->
+<div id="s-fases" class="screen">
+  <div class="fases-header">
+    <button class="btn-rpg btn-cinza" onclick="showScreen('mapa')" style="font-size:.38rem;">← MAPA</button>
+    <div class="fases-titulo" id="fases-titulo" style="color:#facc15;">FASES</div>
+  </div>
+  <div style="font-size:.78rem;color:#64748b;text-align:center;" id="fases-sub"></div>
+  <div class="fases-grid" id="fases-grid"></div>
+</div>
+
+<!-- ===== TELA: BATALHA ===== -->
+<div id="s-batalha" class="screen">
+  <div class="bat-header">
+    <button class="bat-back" onclick="confirmarVoltar()">✕</button>
+    <div class="bat-materia" id="bat-materia"></div>
+    <div class="bat-fase" id="bat-fase-label"></div>
+  </div>
+
+  <div class="arena">
+    <div class="combatentes">
+      <!-- Inimigo -->
+      <div class="combatente" id="comb-inimigo">
+        <div class="comb-sprite" id="inimigo-sprite">👾</div>
+        <div class="comb-nome" id="inimigo-nome">Inimigo</div>
+        <div class="hp-bar-wrap">
+          <div class="hp-label">
+            <span>❤️ HP</span>
+            <span id="inimigo-hp-txt">5/5</span>
+          </div>
+          <div class="hp-bar"><div class="hp-fill inimigo" id="inimigo-hp-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <div class="vs-badge">VS</div>
+
+      <!-- Herói -->
+      <div class="combatente" id="comb-heroi">
+        <div class="comb-sprite" id="heroi-sprite">🧙</div>
+        <div class="comb-nome" id="heroi-nome-bat">Élio</div>
+        <div class="hp-bar-wrap">
+          <div class="hp-label">
+            <span>💚 HP</span>
+            <span id="heroi-hp-txt">5/5</span>
+          </div>
+          <div class="hp-bar"><div class="hp-fill heroi" id="heroi-hp-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- XP bar -->
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div class="hp-label"><span style="color:#facc15;">⭐ XP</span><span id="xp-bat-txt" style="color:#facc15;">0</span></div>
+      <div class="hp-bar"><div class="hp-fill" id="xp-fill" style="width:0%;background:linear-gradient(90deg,#facc15,#f59e0b);"></div></div>
+    </div>
+  </div>
+
+  <!-- Pergunta -->
+  <div class="pergunta-area">
+    <div class="pergunta-box">
+      <div class="perg-num" id="perg-num">Pergunta 1 / 8</div>
+      <div class="perg-txt" id="perg-txt">Carregando...</div>
+    </div>
+    <div class="opcoes-grid" id="opcoes-grid"></div>
+  </div>
+</div>
+
+<!-- ===== TELA: VITÓRIA ===== -->
+<div id="s-vitoria" class="screen">
+  <div class="result-ico" id="vit-ico">🏆</div>
+  <div class="result-txt" id="vit-txt">VITÓRIA!</div>
+  <div class="xp-ganho" id="vit-xp">+30 XP</div>
+  <div class="result-btns">
+    <button class="btn-rpg btn-verde" onclick="proximaFase()">PRÓXIMA FASE ▶</button>
+    <button class="btn-rpg btn-azul" onclick="showScreen('fases')">VER FASES</button>
+  </div>
+</div>
+
+<!-- ===== TELA: DERROTA ===== -->
+<div id="s-derrota" class="screen">
+  <div class="result-ico">💀</div>
+  <div class="result-txt" style="color:#f87171;">VOCÊ FOI DERROTADO!</div>
+  <p style="font-size:.82rem;color:#64748b;text-align:center;">Não desista! Revise o conteúdo e tente novamente.</p>
+  <div class="result-btns">
+    <button class="btn-rpg btn-verde" onclick="repetirFase()">🔄 TENTAR NOVAMENTE</button>
+    <button class="btn-rpg btn-cinza" onclick="showScreen('fases')">← FASES</button>
+  </div>
+</div>
+
+<!-- Reforço overlay -->
+<div id="overlay-reforco">
+  <div class="rf-grande" id="rf-grande">🏆</div>
+  <div class="rf-msg" id="rf-msg">INCRÍVEL!</div>
+</div>
+
+<script src="js/quest_data.js"></script>
+<script src="js/sounds.js"></script>
+<script>
+// =========== ESTADO DO JOGO ===========
+const HEROIS = [
+  { nome:'Élio', emoji:'🧙', classe:'Mago', hpMax:5 },
+  { nome:'Kaia', emoji:'⚔️', classe:'Guerreira', hpMax:6 },
+  { nome:'Luna', emoji:'🏹', classe:'Arqueira', hpMax:5 },
+];
+
+let G = carregarSave() || {
+  heroi: null,
+  heroimIdx: 0,
+  hp: 5, hpMax: 5,
+  xp: 0, nivel: 1,
+  mundoAtual: 5,
+  faseAtual: 0,
+  completas: {},  // 'mundoId_faseId': true
+};
+
+let batalhaState = {};
+let mundoSelecionado = null;
+let faseSelecionada = null;
+let heroimSel = -1;
+
+// =========== SAVE/LOAD ===========
+function salvarSave() { localStorage.setItem('alfaquest_save', JSON.stringify(G)); }
+function carregarSave() {
+  try { return JSON.parse(localStorage.getItem('alfaquest_save')); } catch(e){ return null; }
+}
+function resetarSave() {
+  localStorage.removeItem('alfaquest_save');
+  location.reload();
+}
+
+// =========== NAVEGAÇÃO ===========
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('ativo'));
+  document.getElementById('s-'+id).classList.add('ativo');
+}
+
+function irParaHeroi() {
+  if (G.heroi) { renderMapa(); showScreen('mapa'); return; }
+  showScreen('heroi');
+}
+
+// =========== HERÓI ===========
+function selecionarHeroi(idx, el) {
+  heroimSel = idx;
+  document.querySelectorAll('.heroi-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  const btn = document.getElementById('btn-confirmar-heroi');
+  btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+}
+function confirmarHeroi() {
+  if (heroimSel < 0) return;
+  const h = HEROIS[heroimSel];
+  G.heroimIdx = heroimSel;
+  G.heroi = h;
+  G.hp = h.hpMax; G.hpMax = h.hpMax;
+  salvarSave();
+  renderMapa();
+  showScreen('mapa');
+}
+
+// =========== MAPA ===========
+function renderMapa() {
+  atualizarStatusHeroi('heroi-status-mapa');
+  const lista = document.getElementById('mundos-lista');
+  lista.innerHTML = '';
+
+  Object.keys(QUEST_DATA).forEach(ano => {
+    const m = QUEST_DATA[ano];
+    const desbloqueado = parseInt(ano) <= G.mundoAtual;
+    const card = document.createElement('div');
+    card.className = 'mundo-card ' + (desbloqueado ? 'desbloqueado' : 'bloqueado');
+    card.style.setProperty('--mc', m.cor);
+
+    const fasesCompletas = m.fases.filter(f => G.completas[`${ano}_${f.id}`]).length;
+    const total = m.fases.length;
+
+    card.innerHTML = `
+      <div class="mc-header">
+        <div class="mc-emoji">${m.emoji}</div>
+        <div class="mc-info">
+          <div class="mc-nome">${m.nome} — ${m.mundo}</div>
+          <div class="mc-sub">${m.fases.length} fases · ${m.fases.slice(0,-1).map(f=>f.materia.split(' ')[1]||f.materia).join(', ')}</div>
+          <div class="mc-progress">${fasesCompletas}/${total} fases completas</div>
+        </div>
+        ${desbloqueado ? '' : '<div class="mc-lock">🔒</div>'}
+      </div>`;
+
+    if (desbloqueado) {
+      card.onclick = () => { mundoSelecionado = parseInt(ano); renderFases(); showScreen('fases'); };
+    }
+    lista.appendChild(card);
+  });
+}
+
+// =========== FASES ===========
+function renderFases() {
+  const m = QUEST_DATA[mundoSelecionado];
+  document.getElementById('fases-titulo').textContent = `${m.emoji} ${m.nome} — ${m.mundo}`;
+  document.getElementById('fases-titulo').style.color = m.cor;
+  document.getElementById('fases-sub').textContent = 'Escolha uma fase para batalhar';
+
+  const grid = document.getElementById('fases-grid');
+  grid.innerHTML = '';
+  m.fases.forEach((fase, idx) => {
+    const desbloqueada = idx === 0 || G.completas[`${mundoSelecionado}_${m.fases[idx-1].id}`];
+    const completa = G.completas[`${mundoSelecionado}_${fase.id}`];
+    const card = document.createElement('div');
+    card.className = `fase-card ${fase.boss ? 'boss-card' : ''} ${!desbloqueada ? 'bloqueada' : ''} ${completa ? 'completa' : ''}`;
+    card.style.setProperty('--fc', fase.boss ? '#ef4444' : m.cor);
+    card.innerHTML = `
+      <div class="fc-emoji">${fase.inimigo.emoji}</div>
+      <div class="fc-nome">${fase.nome}</div>
+      <div class="fc-mat">${fase.materia}</div>
+      <div class="fc-hp">${fase.boss?'👑 CHEFE':'⚔️'} HP: ${fase.inimigo.hp} · XP: ${fase.inimigo.xp}</div>`;
+    if (desbloqueada) {
+      card.onclick = () => { faseSelecionada = fase; iniciarBatalha(); };
+    }
+    grid.appendChild(card);
+  });
+}
+
+// =========== BATALHA ===========
+function iniciarBatalha() {
+  const fase = faseSelecionada;
+  batalhaState = {
+    perguntas: [...fase.perguntas].sort(()=>Math.random()-.5),
+    idx: 0,
+    inimigoHp: fase.inimigo.hp,
+    inimigoHpMax: fase.inimigo.hp,
+    heroimHp: G.hp,
+    heroiHpMax: G.hpMax,
+    xpGanho: fase.inimigo.xp,
+    bloqueado: false,
+    acertos: 0, erros: 0
+  };
+
+  // Header
+  document.getElementById('bat-materia').textContent = fase.materia;
+  document.getElementById('bat-fase-label').textContent = fase.nome;
+
+  // Herói
+  const h = G.heroi;
+  document.getElementById('heroi-sprite').textContent = h.emoji;
+  document.getElementById('heroi-nome-bat').textContent = h.nome;
+
+  // Inimigo
+  document.getElementById('inimigo-sprite').textContent = fase.inimigo.emoji;
+  document.getElementById('inimigo-nome').textContent = fase.inimigo.nome;
+
+  atualizarBarrasHP();
+  renderPergunta();
+  showScreen('batalha');
+  falar(fase.materia.replace(/[^\w\s]/g,'') + '. ' + fase.nome);
+}
+
+function renderPergunta() {
+  const b = batalhaState;
+  if (b.idx >= b.perguntas.length) { b.idx = 0; } // recicla se acabar
+  const p = b.perguntas[b.idx];
+
+  document.getElementById('perg-num').textContent = `Pergunta ${b.idx+1}`;
+  document.getElementById('perg-txt').textContent = p.q;
+  falar(p.q);
+
+  const grid = document.getElementById('opcoes-grid');
+  grid.innerHTML = '';
+  const letras = ['A','B','C','D'];
+  p.ops.forEach((op, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opcao-btn';
+    btn.innerHTML = `<span class="op-letra">${letras[i]}</span>${op}`;
+    btn.addEventListener('click', () => responder(i, p.r, btn));
+    grid.appendChild(btn);
+  });
+
+  b.bloqueado = false;
+}
+
+function responder(escolha, correto, btn) {
+  const b = batalhaState;
+  if (b.bloqueado) return;
+  b.bloqueado = true;
+
+  const opcoes = document.querySelectorAll('.opcao-btn');
+  opcoes.forEach(o => o.disabled = true);
+
+  if (escolha === correto) {
+    // ACERTO — herói ataca
+    btn.classList.add('correta');
+    b.acertos++;
+    b.inimigoHp = Math.max(0, b.inimigoHp - 1);
+    atualizarBarrasHP();
+
+    // Animação ataque
+    const hSprite = document.getElementById('heroi-sprite');
+    const iSprite = document.getElementById('inimigo-sprite');
+    hSprite.classList.add('atacando');
+    setTimeout(() => { iSprite.classList.add('levando-dano'); }, 200);
+    setTimeout(() => { hSprite.classList.remove('atacando'); iSprite.classList.remove('levando-dano'); }, 500);
+
+    flashTela('verde');
+    if (typeof SFX !== 'undefined') SFX.acerto();
+    falar('Correto!');
+
+    if (b.inimigoHp <= 0) {
+      // VITÓRIA
+      setTimeout(() => telVitoria(), 600);
+      return;
+    }
+  } else {
+    // ERRO — inimigo ataca
+    btn.classList.add('errada');
+    // Mostra resposta correta
+    opcoes[correto].classList.add('correta');
+    b.erros++;
+    b.heroimHp = Math.max(0, b.heroimHp - 1);
+    G.hp = b.heroimHp;
+    atualizarBarrasHP();
+
+    // Animação
+    const iSprite = document.getElementById('inimigo-sprite');
+    const hSprite = document.getElementById('heroi-sprite');
+    iSprite.classList.add('atacando');
+    setTimeout(() => { hSprite.classList.add('levando-dano'); }, 200);
+    setTimeout(() => { iSprite.classList.remove('atacando'); hSprite.classList.remove('levando-dano'); }, 500);
+
+    flashTela('vermelho');
+    if (typeof SFX !== 'undefined') SFX.erro();
+    falar('Tente de novo. A resposta certa é: ' + b.perguntas[b.idx].ops[correto]);
+
+    if (b.heroimHp <= 0) {
+      setTimeout(() => { showScreen('derrota'); falar('Você foi derrotado! Revise o conteúdo e tente novamente.'); }, 700);
+      return;
+    }
+  }
+
+  // Próxima pergunta
+  b.idx++;
+  setTimeout(() => renderPergunta(), 1100);
+}
+
+function atualizarBarrasHP() {
+  const b = batalhaState;
+  const iPct = (b.inimigoHp / b.inimigoHpMax * 100).toFixed(1);
+  const hPct = (b.heroimHp / b.heroiHpMax * 100).toFixed(1);
+  document.getElementById('inimigo-hp-fill').style.width = iPct + '%';
+  document.getElementById('heroi-hp-fill').style.width = hPct + '%';
+  document.getElementById('inimigo-hp-txt').textContent = `${b.inimigoHp}/${b.inimigoHpMax}`;
+  document.getElementById('heroi-hp-txt').textContent = `${b.heroimHp}/${b.heroiHpMax}`;
+  const hFill = document.getElementById('heroi-hp-fill');
+  hFill.classList.toggle('critico', b.heroimHp <= 2);
+  // XP
+  const xpPct = Math.min(100, (G.xp % 200) / 2);
+  document.getElementById('xp-fill').style.width = xpPct + '%';
+  document.getElementById('xp-bat-txt').textContent = G.xp;
+}
+
+function flashTela(cor) {
+  const f = document.getElementById('dano-flash');
+  f.className = 'dano-flash ' + cor + ' show';
+  setTimeout(() => f.classList.remove('show'), 250);
+}
+
+function telVitoria() {
+  const b = batalhaState;
+  const fase = faseSelecionada;
+  const chaveCompleta = `${mundoSelecionado}_${fase.id}`;
+  G.completas[chaveCompleta] = true;
+  G.xp += b.xpGanho;
+  G.hp = Math.min(G.hpMax, G.hp + 2); // recupera 2 HP na vitória
+
+  // Desbloquear próximo mundo
+  const anos = Object.keys(QUEST_DATA).map(Number);
+  const totalFases = QUEST_DATA[mundoSelecionado].fases.length;
+  const fasesCompletas = QUEST_DATA[mundoSelecionado].fases.filter(f => G.completas[`${mundoSelecionado}_${f.id}`]).length;
+  if (fasesCompletas === totalFases) {
+    const nextIdx = anos.indexOf(mundoSelecionado) + 1;
+    if (nextIdx < anos.length) G.mundoAtual = Math.max(G.mundoAtual, anos[nextIdx]);
+  }
+
+  salvarSave();
+  confetti();
+  if (typeof SFX !== 'undefined') SFX.vitoria ? SFX.vitoria() : SFX.nivel();
+
+  const MSGS = ['INCRÍVEL! ⭐','VOCÊ ARRASOU! 🔥','PERFEITO! 💫','QUE BATALHA! 🏆'];
+  document.getElementById('vit-ico').textContent = fase.boss ? '🏆' : '⭐';
+  document.getElementById('vit-txt').textContent = fase.boss
+    ? `CHEFE DERROTADO!\n${MSGS[Math.floor(Math.random()*MSGS.length)]}`
+    : MSGS[Math.floor(Math.random()*MSGS.length)];
+  document.getElementById('vit-xp').textContent = `+${b.xpGanho} XP · Total: ${G.xp} XP · ✅ ${b.acertos} acertos · ❌ ${b.erros} erros`;
+  falar('Parabéns! Você venceu! ' + b.xpGanho + ' pontos de experiência ganhos!');
+  showScreen('vitoria');
+}
+
+function proximaFase() {
+  const m = QUEST_DATA[mundoSelecionado];
+  const fases = m.fases;
+  const idx = fases.findIndex(f => f.id === faseSelecionada.id);
+  if (idx + 1 < fases.length) {
+    faseSelecionada = fases[idx + 1];
+    const proxChave = `${mundoSelecionado}_${fases[idx].id}`;
+    if (G.completas[proxChave]) iniciarBatalha();
+    else { renderFases(); showScreen('fases'); }
+  } else {
+    renderMapa(); showScreen('mapa');
+  }
+}
+
+function repetirFase() {
+  G.hp = Math.max(1, Math.floor(G.hpMax / 2)); // restaura metade do HP
+  salvarSave();
+  iniciarBatalha();
+}
+
+function confirmarVoltar() {
+  if (confirm('Sair da batalha? O progresso desta fase será perdido.')) {
+    renderFases(); showScreen('fases');
+  }
+}
+
+// =========== STATUS HERÓI ===========
+function atualizarStatusHeroi(elId) {
+  const h = G.heroi;
+  if (!h) return;
+  const pct = (G.hp / G.hpMax * 100).toFixed(0);
+  document.getElementById(elId).innerHTML = `
+    <div class="hs-emoji">${h.emoji}</div>
+    <div class="hs-info">
+      <div class="hs-nome">${h.nome} · Nv.${G.nivel}</div>
+      <div class="hs-xp">⭐ ${G.xp} XP</div>
+      <div class="hs-hp-bar"><div class="hs-hp-fill" style="width:${pct}%"></div></div>
+    </div>`;
+}
+
+// =========== CONFETTI ===========
+function confetti() {
+  const ov = document.getElementById('confetti-overlay');
+  ['#facc15','#4ade80','#60a5fa','#f472b6','#fb923c'].forEach(c => {
+    for(let i=0;i<8;i++){
+      const p=document.createElement('div'); p.className='confetti-p';
+      p.style.left=Math.random()*100+'vw'; p.style.background=c;
+      p.style.animationDuration=(1.2+Math.random()*1.5)+'s';
+      p.style.animationDelay=Math.random()*0.4+'s';
+      ov.appendChild(p); setTimeout(()=>p.remove(),3000);
+    }
+  });
+}
+
+// =========== TTS ===========
+function falar(txt, rate=1) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(String(txt));
+  u.lang='pt-BR'; u.rate=rate; u.pitch=1;
+  speechSynthesis.speak(u);
+}
+
+// =========== ESTRELAS FUNDO ===========
+(function criaestrelas() {
+  const bg = document.getElementById('stars-bg');
+  if (!bg) return;
+  for(let i=0;i<60;i++){
+    const s=document.createElement('div'); s.className='star';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    s.style.animationDelay=Math.random()*3+'s';
+    s.style.width=s.style.height=(Math.random()*2+1)+'px';
+    bg.appendChild(s);
+  }
+})();
+
+// =========== INIT ===========
+if (G.heroi) {
+  const h = G.heroi;
+  document.getElementById('titulo-heroi').textContent = h.emoji;
+  document.getElementById('save-info').textContent =
+    `JOGO SALVO: ${h.nome} · ${G.xp} XP · ${Object.keys(G.completas).length} fases completas`;
+}
+</script>
+</body>
+</html>
