@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#0f172a"/>
+<title>Anos Finais — AlfaPlay</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body { display:flex; flex-direction:column; min-height:100vh; }
+  .wrap { max-width:940px; margin:0 auto; width:100%; padding:1.4rem 1.2rem 2rem; }
+  .sec-head { display:flex; align-items:center; gap:.7rem; margin:.4rem 0 1rem; }
+  .sec-head .bar { width:8px; height:26px; border-radius:4px; background:#60a5fa; box-shadow:0 3px 0 rgba(0,0,0,.4); }
+  .sec-head h1 { font-family:var(--pixel); font-size:.8rem; letter-spacing:1px; }
+  .sec-head .hint { font-size:.8rem; color:#94a3b8; margin-left:auto; }
+  .games-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(180px,100%),1fr)); gap:1.1rem; }
+  .game-card {
+    background:var(--dark2); border:2px solid var(--border); border-radius:16px; padding:1.5rem 1rem; text-align:center;
+    cursor:pointer; text-decoration:none; color:var(--text); transition:transform .15s,border-color .15s,box-shadow .15s;
+    display:flex; flex-direction:column; align-items:center; gap:.7rem; box-shadow:0 4px 0 rgba(0,0,0,.3); position:relative; overflow:hidden;
+  }
+  .game-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--accent,#60a5fa); opacity:.85; }
+  .game-card:hover { transform:translateY(-6px); box-shadow:0 12px 0 rgba(0,0,0,.3); border-color:var(--accent,#60a5fa); }
+  .game-card .game-icon { font-size:3.2rem; line-height:1; }
+  .game-card .game-name { font-family:var(--pixel); font-size:.6rem; line-height:1.7; }
+  .game-card .game-desc { font-size:.78rem; color:#94a3b8; line-height:1.4; }
+  .game-card .game-badge { font-family:var(--pixel); font-size:.45rem; padding:.35em .8em; border-radius:99px; border:1px solid var(--accent,#60a5fa); color:var(--accent,#60a5fa); margin-top:auto; }
+  .game-card .ext { position:absolute; top:.5rem; right:.6rem; font-size:.7rem; color:#64748b; border:1px solid var(--dark3); border-radius:6px; padding:0 .3em; }
+  footer { margin-top:auto; text-align:center; padding:1.5rem; color:#64748b; font-size:.8rem; border-top:1px solid var(--dark3); }
+  footer span { color:var(--green); font-weight:900; }
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="index.html" class="btn btn-gray" style="font-size:.8rem;">← MENU</a>
+  <span class="pixel-title" style="color:#60a5fa;">🔵 ANOS FINAIS</span>
+  <span style="width:70px;"></span>
+</header>
+
+<div class="wrap">
+  <div class="sec-head"><span class="bar"></span><h1>6º AO 9º ANO</h1><span class="hint">quiz · matemática · gramática</span></div>
+
+  <div class="games-grid">
+    <a class="game-card" href="aventura.html" style="--accent:#a78bfa">
+      <div class="game-icon">⚔️</div><div class="game-name">ALFAQUEST</div>
+      <div class="game-desc">Aventura de perguntas e respostas por fases.</div><span class="game-badge">🗺️ QUEST</span>
+    </a>
+    <a class="game-card" href="aventura3d.html" style="--accent:#f87171">
+      <div class="game-icon">🏰</div><div class="game-name">ALFAQUEST 3D</div>
+      <div class="game-desc">Ruínas medievais em 3D com combate e chefão.</div><span class="game-badge">🏰 3D · THREE.JS</span>
+    </a>
+    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/Matando-Matematica/" style="--accent:#fb923c">
+      <span class="ext">↗</span><div class="game-icon">🚀</div><div class="game-name">MATH COMMANDER</div>
+      <div class="game-desc">Resolva cálculos e defenda a nave. 1º ao 9º ano.</div><span class="game-badge">➗ MATEMÁTICA</span>
+    </a>
+    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/JOGO-DAS-CONJUN-ES-/" style="--accent:#f472b6">
+      <span class="ext">↗</span><div class="game-icon">📺</div><div class="game-name">SHOW DAS CONJUNÇÕES</div>
+      <div class="game-desc">Quiz estilo Show do Milhão sobre conjunções.</div><span class="game-badge">✍️ GRAMÁTICA</span>
+    </a>
+    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/quiz-informatica/" style="--accent:#60a5fa">
+      <span class="ext">↗</span><div class="game-icon">💻</div><div class="game-name">QUIZ INFORMÁTICA</div>
+      <div class="game-desc">Exercícios de informática básica.</div><span class="game-badge">🖥️ INFORMÁTICA</span>
+    </a>
+    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/banco_de_bc/" style="--accent:#facc15">
+      <span class="ext">↗</span><div class="game-icon">🌊</div><div class="game-name">BANCO DE BALNEÁRIO</div>
+      <div class="game-desc">Educação financeira multiplayer.</div><span class="game-badge">💰 FINANÇAS</span>
+    </a>
+    <a class="game-card" target="_blank" rel="noopener" href="https://quem-erra-cai.alfredobc.workers.dev/" style="--accent:#f87171">
+      <span class="ext">↗</span><div class="game-icon">🎤</div><div class="game-name">QUEM ERRA CAI</div>
+      <div class="game-desc">Jogo de auditório: errou, caiu!</div><span class="game-badge">🎯 AUDITÓRIO</span>
+    </a>
+  </div>
+</div>
+
+<footer>AlfaPlay · Criado por <span>Anderson Rodrigo Costa</span> · © 2026</footer>
+</body>
+</html>

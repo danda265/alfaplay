@@ -7,268 +7,82 @@
 <title>AlfaPlay 🎮</title>
 <link rel="stylesheet" href="css/game.css"/>
 <style>
-  html { scroll-behavior: smooth; }
   body { display:flex; flex-direction:column; min-height:100vh; }
 
-  /* ── Hero ── */
-  .hero { text-align:center; padding: 2.6rem 1rem 1.4rem; position:relative; overflow:hidden; }
+  .hero { text-align:center; padding: 3rem 1rem 1rem; position:relative; overflow:hidden; }
   .hero-floaters { position:absolute; inset:0; pointer-events:none; z-index:0; }
-  .hero-floaters span {
-    position:absolute; font-size:1.6rem; opacity:.18; animation: floaty 7s ease-in-out infinite;
-    filter: drop-shadow(0 2px 0 rgba(0,0,0,.5));
-  }
-  @keyframes floaty { 0%,100%{ transform: translateY(0) rotate(-6deg);} 50%{ transform: translateY(-14px) rotate(6deg);} }
+  .hero-floaters span { position:absolute; font-size:1.6rem; opacity:.16; animation: floaty 7s ease-in-out infinite; }
+  @keyframes floaty { 0%,100%{ transform:translateY(0) rotate(-6deg);} 50%{ transform:translateY(-14px) rotate(6deg);} }
   .hero > * { position:relative; z-index:1; }
-  .logo-icon { font-size: clamp(2.6rem, 8vw, 4.6rem); display:block; margin-bottom: .4rem; animation: floaty 4s ease-in-out infinite; }
+  .logo-icon { font-size: clamp(2.8rem, 9vw, 5rem); display:block; margin-bottom:.4rem; animation: floaty 4s ease-in-out infinite; }
   .logo-text {
-    font-family: var(--pixel); font-size: clamp(1.6rem, 6.4vw, 3.2rem);
-    background: linear-gradient(135deg, #4ade80, #60a5fa, #f472b6, #facc15, #4ade80);
-    background-size: 300% 100%;
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    display: inline-block; filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.55));
-    animation: shine 8s linear infinite;
+    font-family: var(--pixel); font-size: clamp(1.8rem, 7vw, 3.4rem);
+    background: linear-gradient(135deg,#4ade80,#60a5fa,#f472b6,#facc15,#4ade80); background-size:300% 100%;
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; display:inline-block;
+    filter: drop-shadow(3px 3px 0 rgba(0,0,0,.55)); animation: shine 8s linear infinite;
   }
   @keyframes shine { to { background-position: 300% 0; } }
-  .logo-sub { font-family: var(--pixel); font-size: 0.55rem; color: #94a3b8; margin-top: 0.8rem; letter-spacing: 2px; }
-  .count-badge {
-    display:inline-block; margin-top: 1rem; font-family: var(--pixel); font-size: 0.5rem;
-    color: var(--yellow); border: 2px solid #422006; background: rgba(250,204,21,.1);
-    padding: .5em 1em; border-radius: 99px;
-  }
+  .logo-sub { font-family: var(--pixel); font-size:.55rem; color:#94a3b8; margin-top:.8rem; letter-spacing:2px; }
+  .escolha { font-family:var(--pixel); font-size:.6rem; color:#64748b; text-align:center; margin:1.6rem 0 .2rem; letter-spacing:2px; }
 
-  /* ── Nav de categorias ── */
-  .cat-nav { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; padding: .4rem 1rem 0; }
-  .cat-nav a {
-    font-family: var(--pixel); font-size:.5rem; text-decoration:none;
-    padding:.55em 1em; border-radius:99px; border:2px solid var(--border);
-    background: var(--dark2); color: var(--text); transition: all .15s;
+  .menu { max-width:760px; margin:.6rem auto 0; width:100%; padding:0 1.2rem 2rem; display:flex; flex-direction:column; gap:1.1rem; }
+  .cat {
+    display:flex; align-items:center; gap:1.2rem; text-decoration:none; color:var(--text);
+    background: linear-gradient(180deg, rgba(30,41,59,.9), rgba(17,25,42,.92));
+    border:3px solid var(--border); border-left:10px solid var(--accent);
+    border-radius:20px; padding:1.4rem; box-shadow:0 6px 0 rgba(0,0,0,.3);
+    transition:transform .15s, box-shadow .15s, border-color .15s;
+    animation: cat-in .4s ease both;
   }
-  .cat-nav a:hover { border-color: var(--accent,#60a5fa); color:#fff; transform: translateY(-2px); }
+  .cat:hover { transform:translateY(-4px); box-shadow:0 12px 0 rgba(0,0,0,.3); border-color:var(--accent); }
+  @keyframes cat-in { from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none} }
+  .cat .ic { font-size:3.4rem; line-height:1; flex:0 0 auto; }
+  .cat .tx { flex:1; }
+  .cat .nm { display:block; font-family:var(--pixel); font-size:.85rem; color:var(--accent); line-height:1.5; }
+  .cat .ds { display:block; font-size:.9rem; color:#94a3b8; margin-top:.5rem; }
+  .cat .go { font-family:var(--pixel); font-size:1.1rem; color:var(--accent); opacity:.75; }
 
-  /* ── Seções ── */
-  section.games { max-width: 940px; margin: 0 auto; width:100%; padding: 1.6rem 1.2rem 0; }
-  .sec-head { display:flex; align-items:center; gap:.7rem; margin: .4rem 0 1.1rem; }
-  .sec-head .bar { width: 8px; height: 26px; border-radius: 4px; background: var(--accent,#60a5fa); box-shadow: 0 3px 0 rgba(0,0,0,.4); }
-  .sec-head h2 { font-family: var(--pixel); font-size: .72rem; letter-spacing:1px; }
-  .sec-head .hint { font-size:.8rem; color:#94a3b8; margin-left:auto; }
-
-  .games-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
-    gap: 1.1rem;
-  }
-  .game-card {
-    background: var(--dark2); border: 2px solid var(--border); border-radius: 16px;
-    padding: 1.5rem 1rem; text-align: center; cursor: pointer; text-decoration: none;
-    color: var(--text); transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
-    display: flex; flex-direction:column; align-items:center; gap: 0.7rem;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.3); position:relative; overflow:hidden;
-  }
-  .game-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:4px; background: var(--accent,#60a5fa); opacity:.85;
-  }
-  .game-card:hover { transform: translateY(-6px); box-shadow: 0 12px 0 rgba(0,0,0,0.3); border-color: var(--accent,#60a5fa); }
-  .game-card .game-icon { font-size: 3.2rem; line-height: 1; }
-  .game-card .game-name { font-family: var(--pixel); font-size: 0.6rem; line-height: 1.7; }
-  .game-card .game-desc { font-size: 0.78rem; color: #94a3b8; line-height: 1.4; }
-  .game-card .game-badge {
-    font-family: var(--pixel); font-size: 0.45rem; padding: 0.35em 0.8em; border-radius: 99px;
-    border: 1px solid var(--accent,#60a5fa); color: var(--accent,#60a5fa); margin-top: auto;
-  }
-  .game-card .ext {
-    position:absolute; top:.5rem; right:.6rem; font-size:.7rem; color:#64748b;
-    border:1px solid var(--dark3); border-radius:6px; padding:0 .3em;
-  }
-
-  /* especial banner */
-  .esp-banner {
-    text-align:center; padding:.9rem 1rem; background:linear-gradient(135deg,#0f2044,#1a1040);
-    border:2px solid #1e3a5f; border-radius:14px; margin-bottom:1.2rem;
-  }
-  .esp-banner .t { font-family:var(--pixel); font-size:.58rem; color:#60a5fa; margin:.3rem 0; }
-  .esp-banner .d { font-size:.8rem; color:#94a3b8; }
-
-  footer { margin-top: 2rem; text-align:center; padding: 1.5rem; color: #64748b; font-size: 0.8rem; border-top: 1px solid var(--dark3); }
-  footer span { color: var(--green); font-weight:900; }
+  footer { margin-top:auto; text-align:center; padding:1.5rem; color:#64748b; font-size:.8rem; border-top:1px solid var(--dark3); }
+  footer span { color:var(--green); font-weight:900; }
+  @media(max-width:520px){ .cat .ic{font-size:2.6rem} .cat .nm{font-size:.7rem} .cat .go{display:none} }
 </style>
 </head>
 <body>
 
 <div class="hero">
   <div class="hero-floaters" aria-hidden="true">
-    <span style="left:8%;top:20%">🎮</span><span style="left:22%;top:62%;animation-delay:1s">⭐</span>
-    <span style="left:80%;top:24%;animation-delay:.6s">🤖</span><span style="left:90%;top:66%;animation-delay:1.6s">🧩</span>
-    <span style="left:52%;top:12%;animation-delay:2.1s">🔤</span><span style="left:68%;top:72%;animation-delay:1.2s">🚀</span>
+    <span style="left:8%;top:22%">🎮</span><span style="left:24%;top:64%;animation-delay:1s">⭐</span>
+    <span style="left:80%;top:26%;animation-delay:.6s">🤖</span><span style="left:90%;top:66%;animation-delay:1.6s">🧩</span>
+    <span style="left:52%;top:12%;animation-delay:2.1s">🔤</span><span style="left:68%;top:74%;animation-delay:1.2s">🚀</span>
   </div>
   <span class="logo-icon">🎮</span>
   <div class="logo-text">AlfaPlay</div>
   <div class="logo-sub">PORTAL DE JOGOS EDUCATIVOS</div>
-  <div class="count-badge">⭐ 21 JOGOS PARA APRENDER BRINCANDO ⭐</div>
 </div>
 
-<nav class="cat-nav">
-  <a href="#alfabetizacao" style="--accent:#4ade80">🔤 Alfabetização</a>
-  <a href="#aventura" style="--accent:#a78bfa">⚔️ Aventura</a>
-  <a href="#mais" style="--accent:#facc15">🎯 Mais jogos</a>
-  <a href="#especial" style="--accent:#60a5fa">💙 Inclusão</a>
+<p class="escolha">⭐ ESCOLHA A TURMA ⭐</p>
+
+<nav class="menu">
+  <a class="cat" href="iniciais.html" style="--accent:#4ade80">
+    <span class="ic">🟢</span>
+    <span class="tx"><span class="nm">ANOS INICIAIS</span><span class="ds">1º ao 5º ano · alfabetização, leitura e lógica · 8 jogos</span></span>
+    <span class="go">▶</span>
+  </a>
+  <a class="cat" href="finais.html" style="--accent:#60a5fa">
+    <span class="ic">🔵</span>
+    <span class="tx"><span class="nm">ANOS FINAIS</span><span class="ds">6º ao 9º ano · quiz, matemática, gramática e mais · 7 jogos</span></span>
+    <span class="go">▶</span>
+  </a>
+  <a class="cat" href="especial.html" style="--accent:#a78bfa">
+    <span class="ic">💙</span>
+    <span class="tx"><span class="nm">ESPECIAL · INCLUSÃO</span><span class="ds">TEA · TDAH · Down · sem pressão de tempo · 6 jogos</span></span>
+    <span class="go">▶</span>
+  </a>
 </nav>
-
-<!-- ══ ALFABETIZAÇÃO ══ -->
-<section class="games" id="alfabetizacao">
-  <div class="sec-head" style="--accent:#4ade80"><span class="bar"></span><h2>🔤 ALFABETIZAÇÃO</h2><span class="hint">1º ao 3º ano</span></div>
-
-  <div class="year-pills" style="margin-bottom:1.1rem;">
-    <button class="year-pill active" data-ano="1" onclick="selecionarAno(1)">🟢 1º ANO</button>
-    <button class="year-pill" data-ano="2" onclick="selecionarAno(2)">🔵 2º ANO</button>
-    <button class="year-pill" data-ano="3" onclick="selecionarAno(3)">🩷 3º ANO</button>
-  </div>
-
-  <div class="games-grid">
-    <a class="game-card" data-game="memoria" id="card-memoria" href="memoria.html?ano=1" style="--accent:#60a5fa">
-      <div class="game-icon">🃏</div><div class="game-name">MEMÓRIA</div>
-      <div class="game-desc">Encontre os pares de palavras e figuras.</div>
-      <span class="game-badge">🧠 MEMÓRIA VISUAL</span>
-    </a>
-    <a class="game-card" data-game="arrasta" id="card-arrasta" href="arrasta.html?ano=1" style="--accent:#4ade80">
-      <div class="game-icon">🧩</div><div class="game-name">ARRASTA SÍLABAS</div>
-      <div class="game-desc">Monte palavras arrastando as sílabas na ordem certa.</div>
-      <span class="game-badge">✍️ SÍLABAS</span>
-    </a>
-    <a class="game-card" data-game="forca" id="card-forca" href="forca.html?ano=1" style="--accent:#f472b6">
-      <div class="game-icon">🎪</div><div class="game-name">FORCA</div>
-      <div class="game-desc">Descubra a palavra ouvindo a dica.</div>
-      <span class="game-badge">🔤 LETRAS</span>
-    </a>
-    <a class="game-card" data-game="ditado" id="card-ditado" href="ditado.html?ano=1" style="--accent:#facc15">
-      <div class="game-icon">🎧</div><div class="game-name">DITADO MÁGICO</div>
-      <div class="game-desc">Ouça a palavra e escreva corretamente.</div>
-      <span class="game-badge">👂 DITADO</span>
-    </a>
-    <a class="game-card" data-game="pintura" id="card-pintura" href="pintura.html?ano=1" style="--accent:#fb923c">
-      <div class="game-icon">🖌️</div><div class="game-name">PINTURA PIXEL</div>
-      <div class="game-desc">Pinte desenhos com pixel art.</div>
-      <span class="game-badge">🎨 ARTE</span>
-    </a>
-    <a class="game-card" data-game="quebracabeca" id="card-quebracabeca" href="quebracabeca.html?ano=1" style="--accent:#c084fc">
-      <div class="game-icon">🔲</div><div class="game-name">QUEBRA-CABEÇA</div>
-      <div class="game-desc">Monte a figura clicando nas peças na ordem certa.</div>
-      <span class="game-badge">🔀 RACIOCÍNIO</span>
-    </a>
-  </div>
-</section>
-
-<!-- ══ AVENTURA ══ -->
-<section class="games" id="aventura">
-  <div class="sec-head" style="--accent:#a78bfa"><span class="bar"></span><h2>⚔️ AVENTURA</h2><span class="hint">quiz + ação</span></div>
-  <div class="games-grid">
-    <a class="game-card" href="aventura.html" style="--accent:#a78bfa">
-      <div class="game-icon">⚔️</div><div class="game-name">ALFAQUEST</div>
-      <div class="game-desc">Aventura de perguntas e respostas por fases.</div>
-      <span class="game-badge">🗺️ QUEST</span>
-    </a>
-    <a class="game-card" href="aventura3d.html" style="--accent:#f87171">
-      <div class="game-icon">🏰</div><div class="game-name">ALFAQUEST 3D</div>
-      <div class="game-desc">Ruínas medievais em 3D com combate e chefão.</div>
-      <span class="game-badge">🏰 3D · THREE.JS</span>
-    </a>
-  </div>
-</section>
-
-<!-- ══ MAIS JOGOS (links) ══ -->
-<section class="games" id="mais">
-  <div class="sec-head" style="--accent:#facc15"><span class="bar"></span><h2>🎯 MAIS JOGOS</h2><span class="hint">abrem em nova aba ↗</span></div>
-  <div class="games-grid">
-    <a class="game-card" target="_blank" rel="noopener" href="https://missao-robo.alfredobc.workers.dev/" style="--accent:#60a5fa">
-      <span class="ext">↗</span><div class="game-icon">🤖</div><div class="game-name">MISSÃO ROBÔ</div>
-      <div class="game-desc">Programe o robô com setas até a estrela.</div>
-      <span class="game-badge">🧠 LÓGICA</span>
-    </a>
-    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/mundo-das-vogais/" style="--accent:#4ade80">
-      <span class="ext">↗</span><div class="game-icon">🐣</div><div class="game-name">MUNDO DAS VOGAIS</div>
-      <div class="game-desc">Descubra as vogais brincando.</div>
-      <span class="game-badge">🔤 VOGAIS</span>
-    </a>
-    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/JOGO-DAS-CONJUN-ES-/" style="--accent:#f472b6">
-      <span class="ext">↗</span><div class="game-icon">📺</div><div class="game-name">SHOW DAS CONJUNÇÕES</div>
-      <div class="game-desc">Quiz estilo Show do Milhão sobre conjunções.</div>
-      <span class="game-badge">✍️ GRAMÁTICA</span>
-    </a>
-    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/Matando-Matematica/" style="--accent:#fb923c">
-      <span class="ext">↗</span><div class="game-icon">🚀</div><div class="game-name">MATH COMMANDER</div>
-      <div class="game-desc">Resolva cálculos e defenda a nave. 1º ao 9º ano.</div>
-      <span class="game-badge">➗ MATEMÁTICA</span>
-    </a>
-    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/quiz-informatica/" style="--accent:#60a5fa">
-      <span class="ext">↗</span><div class="game-icon">💻</div><div class="game-name">QUIZ INFORMÁTICA</div>
-      <div class="game-desc">Exercícios de informática básica.</div>
-      <span class="game-badge">🖥️ INFORMÁTICA</span>
-    </a>
-    <a class="game-card" target="_blank" rel="noopener" href="https://quem-erra-cai.alfredobc.workers.dev/" style="--accent:#f87171">
-      <span class="ext">↗</span><div class="game-icon">🎤</div><div class="game-name">QUEM ERRA CAI</div>
-      <div class="game-desc">Jogo de auditório: errou, caiu!</div>
-      <span class="game-badge">🎯 AUDITÓRIO</span>
-    </a>
-    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/banco_de_bc/" style="--accent:#facc15">
-      <span class="ext">↗</span><div class="game-icon">🌊</div><div class="game-name">BANCO DE BALNEÁRIO</div>
-      <div class="game-desc">Educação financeira multiplayer.</div>
-      <span class="game-badge">💰 FINANÇAS</span>
-    </a>
-  </div>
-</section>
-
-<!-- ══ INCLUSÃO / ESPECIAL ══ -->
-<section class="games" id="especial">
-  <div class="sec-head" style="--accent:#60a5fa"><span class="bar"></span><h2>💙 INCLUSÃO</h2><span class="hint">TEA · TDAH · Down</span></div>
-  <div class="esp-banner">
-    <div style="font-size:1.8rem">💙</div>
-    <div class="t">JOGOS INCLUSIVOS — SEM PRESSÃO DE TEMPO</div>
-    <div class="d">Baseados em ABA, PECS e ensino estruturado.</div>
-  </div>
-  <div class="games-grid">
-    <a class="game-card" href="esp_pareamento.html" style="--accent:#60a5fa">
-      <div class="game-icon">🔍</div><div class="game-name">PAREAMENTO</div>
-      <div class="game-desc">Encontre a imagem igual. Discriminação visual.</div>
-      <span class="game-badge">TEA · DOWN · TDAH</span>
-    </a>
-    <a class="game-card" href="esp_comunicacao.html" style="--accent:#3b82f6">
-      <div class="game-icon">🗣️</div><div class="game-name">PRANCHA PECS</div>
-      <div class="game-desc">Toque na imagem para se comunicar.</div>
-      <span class="game-badge">TEA · DOWN</span>
-    </a>
-    <a class="game-card" href="esp_sequencia.html" style="--accent:#4ade80">
-      <div class="game-icon">📋</div><div class="game-name">SEQUÊNCIA</div>
-      <div class="game-desc">Coloque as imagens na ordem certa.</div>
-      <span class="game-badge">TEA · TDAH · DOWN</span>
-    </a>
-    <a class="game-card" href="esp_contagem.html" style="--accent:#f472b6">
-      <div class="game-icon">🔢</div><div class="game-name">CONTAGEM</div>
-      <div class="game-desc">Conte os objetos e toque no número certo.</div>
-      <span class="game-badge">DOWN · TDAH</span>
-    </a>
-    <a class="game-card" href="esp_emocoes.html" style="--accent:#fb923c">
-      <div class="game-icon">😊</div><div class="game-name">EMOÇÕES</div>
-      <div class="game-desc">Reconheça expressões faciais.</div>
-      <span class="game-badge">TEA · TDAH</span>
-    </a>
-    <a class="game-card" href="esp_palavra_imagem.html" style="--accent:#c084fc">
-      <div class="game-icon">🖼️</div><div class="game-name">PALAVRA + IMAGEM</div>
-      <div class="game-desc">Associe imagem à palavra. Leitura global.</div>
-      <span class="game-badge">TEA · DOWN</span>
-    </a>
-  </div>
-</section>
 
 <footer>
   AlfaPlay · Criado por <span>Anderson Rodrigo Costa</span> · © 2026
 </footer>
 
-<script>
-function selecionarAno(ano) {
-  document.querySelectorAll('.year-pill').forEach(p => p.classList.remove('active'));
-  document.querySelector(`.year-pill[data-ano="${ano}"]`).classList.add('active');
-  ['memoria','arrasta','forca','ditado','pintura','quebracabeca'].forEach(j => {
-    document.getElementById(`card-${j}`).href = `${j}.html?ano=${ano}`;
-  });
-}
-</script>
 </body>
 </html>

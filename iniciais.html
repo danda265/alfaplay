@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#0f172a"/>
+<title>Anos Iniciais — AlfaPlay</title>
+<link rel="stylesheet" href="css/game.css"/>
+<style>
+  body { display:flex; flex-direction:column; min-height:100vh; }
+  .wrap { max-width:940px; margin:0 auto; width:100%; padding:1.4rem 1.2rem 2rem; }
+  .sec-head { display:flex; align-items:center; gap:.7rem; margin:.4rem 0 1rem; }
+  .sec-head .bar { width:8px; height:26px; border-radius:4px; background:#4ade80; box-shadow:0 3px 0 rgba(0,0,0,.4); }
+  .sec-head h1 { font-family:var(--pixel); font-size:.8rem; letter-spacing:1px; }
+  .sec-head .hint { font-size:.8rem; color:#94a3b8; margin-left:auto; }
+  .games-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(180px,100%),1fr)); gap:1.1rem; }
+  .game-card {
+    background:var(--dark2); border:2px solid var(--border); border-radius:16px; padding:1.5rem 1rem; text-align:center;
+    cursor:pointer; text-decoration:none; color:var(--text); transition:transform .15s,border-color .15s,box-shadow .15s;
+    display:flex; flex-direction:column; align-items:center; gap:.7rem; box-shadow:0 4px 0 rgba(0,0,0,.3); position:relative; overflow:hidden;
+  }
+  .game-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--accent,#60a5fa); opacity:.85; }
+  .game-card:hover { transform:translateY(-6px); box-shadow:0 12px 0 rgba(0,0,0,.3); border-color:var(--accent,#60a5fa); }
+  .game-card .game-icon { font-size:3.2rem; line-height:1; }
+  .game-card .game-name { font-family:var(--pixel); font-size:.6rem; line-height:1.7; }
+  .game-card .game-desc { font-size:.78rem; color:#94a3b8; line-height:1.4; }
+  .game-card .game-badge { font-family:var(--pixel); font-size:.45rem; padding:.35em .8em; border-radius:99px; border:1px solid var(--accent,#60a5fa); color:var(--accent,#60a5fa); margin-top:auto; }
+  .game-card .ext { position:absolute; top:.5rem; right:.6rem; font-size:.7rem; color:#64748b; border:1px solid var(--dark3); border-radius:6px; padding:0 .3em; }
+  footer { margin-top:auto; text-align:center; padding:1.5rem; color:#64748b; font-size:.8rem; border-top:1px solid var(--dark3); }
+  footer span { color:var(--green); font-weight:900; }
+</style>
+</head>
+<body>
+<header class="game-header">
+  <a href="index.html" class="btn btn-gray" style="font-size:.8rem;">← MENU</a>
+  <span class="pixel-title" style="color:#4ade80;">🟢 ANOS INICIAIS</span>
+  <span style="width:70px;"></span>
+</header>
+
+<div class="wrap">
+  <div class="sec-head"><span class="bar"></span><h1>ALFABETIZAÇÃO</h1><span class="hint">1º ao 3º ano</span></div>
+  <div class="year-pills" style="margin-bottom:1.1rem;">
+    <button class="year-pill active" data-ano="1" onclick="selAno(1)">🟢 1º ANO</button>
+    <button class="year-pill" data-ano="2" onclick="selAno(2)">🔵 2º ANO</button>
+    <button class="year-pill" data-ano="3" onclick="selAno(3)">🩷 3º ANO</button>
+  </div>
+
+  <div class="games-grid">
+    <a class="game-card" id="card-memoria" href="memoria.html?ano=1" style="--accent:#60a5fa">
+      <div class="game-icon">🃏</div><div class="game-name">MEMÓRIA</div>
+      <div class="game-desc">Encontre os pares de palavras e figuras.</div><span class="game-badge">🧠 MEMÓRIA</span>
+    </a>
+    <a class="game-card" id="card-arrasta" href="arrasta.html?ano=1" style="--accent:#4ade80">
+      <div class="game-icon">🧩</div><div class="game-name">ARRASTA SÍLABAS</div>
+      <div class="game-desc">Monte palavras arrastando as sílabas.</div><span class="game-badge">✍️ SÍLABAS</span>
+    </a>
+    <a class="game-card" id="card-forca" href="forca.html?ano=1" style="--accent:#f472b6">
+      <div class="game-icon">🎪</div><div class="game-name">FORCA</div>
+      <div class="game-desc">Descubra a palavra ouvindo a dica.</div><span class="game-badge">🔤 LETRAS</span>
+    </a>
+    <a class="game-card" id="card-ditado" href="ditado.html?ano=1" style="--accent:#facc15">
+      <div class="game-icon">🎧</div><div class="game-name">DITADO MÁGICO</div>
+      <div class="game-desc">Ouça a palavra e escreva corretamente.</div><span class="game-badge">👂 DITADO</span>
+    </a>
+    <a class="game-card" id="card-pintura" href="pintura.html?ano=1" style="--accent:#fb923c">
+      <div class="game-icon">🖌️</div><div class="game-name">PINTURA PIXEL</div>
+      <div class="game-desc">Pinte desenhos com pixel art.</div><span class="game-badge">🎨 ARTE</span>
+    </a>
+    <a class="game-card" id="card-quebracabeca" href="quebracabeca.html?ano=1" style="--accent:#c084fc">
+      <div class="game-icon">🔲</div><div class="game-name">QUEBRA-CABEÇA</div>
+      <div class="game-desc">Monte a figura na ordem certa.</div><span class="game-badge">🔀 RACIOCÍNIO</span>
+    </a>
+    <a class="game-card" target="_blank" rel="noopener" href="https://danda265.github.io/mundo-das-vogais/" style="--accent:#4ade80">
+      <span class="ext">↗</span><div class="game-icon">🐣</div><div class="game-name">MUNDO DAS VOGAIS</div>
+      <div class="game-desc">Descubra as vogais brincando.</div><span class="game-badge">🔤 VOGAIS</span>
+    </a>
+    <a class="game-card" target="_blank" rel="noopener" href="https://missao-robo.alfredobc.workers.dev/" style="--accent:#60a5fa">
+      <span class="ext">↗</span><div class="game-icon">🤖</div><div class="game-name">MISSÃO ROBÔ</div>
+      <div class="game-desc">Programe o robô com setas até a estrela.</div><span class="game-badge">🧠 LÓGICA</span>
+    </a>
+  </div>
+</div>
+
+<footer>AlfaPlay · Criado por <span>Anderson Rodrigo Costa</span> · © 2026</footer>
+
+<script>
+function selAno(a){
+  document.querySelectorAll('.year-pill').forEach(p => p.classList.toggle('active', +p.dataset.ano === a));
+  ['memoria','arrasta','forca','ditado','pintura','quebracabeca'].forEach(j =>
+    document.getElementById('card-'+j).href = j + '.html?ano=' + a);
+}
+</script>
+</body>
+</html>
