@@ -1126,17 +1126,20 @@ function getQ(mat, dif, anos){
 }
 
 // ─── TTS (voz neural na nuvem + fallback pra voz do sistema) ───
-const _TTSU='https://alfaplay-voz.alfredobc.workers.dev/tts'; let _ta=null; const _tc=new Map();
+const _TTSU='https://alfaplay-voz.alfredobc.workers.dev/tts'; let _ta=null,_tsq=0; const _tc=new Map();
 async function falar(t,r=1){
   t=String(t==null?'':t).trim(); if(!t)return;
+  const sq=++_tsq;
   try{ if(_ta){_ta.pause();_ta.currentTime=0;} }catch(e){}
   try{ speechSynthesis.cancel(); }catch(e){}
   const rr=r>=1?'0%':'-10%'; const key=t+'|'+rr;
   try{
     let src=_tc.get(key);
     if(!src){ const rp=await fetch(`${_TTSU}?text=${encodeURIComponent(t)}&rate=${encodeURIComponent(rr)}`); if(!rp.ok)throw 0; const b=await rp.blob(); if(b.size<400)throw 0; src=URL.createObjectURL(b); _tc.set(key,src); }
+    if(sq!==_tsq)return;
     _ta=new Audio(src); await _ta.play();
   }catch(e){
+    if(sq!==_tsq)return;
     if(!('speechSynthesis' in window))return; speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(t); u.lang='pt-BR'; u.rate=Math.max(.6,Math.min(1,r)); u.pitch=1; speechSynthesis.speak(u);
   }

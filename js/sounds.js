@@ -49,6 +49,7 @@ const SFX = (() => {
 // ── TTS — voz neural pt-BR na nuvem, com fallback pra voz do sistema ──
 const TTS_URL = 'https://alfaplay-voz.alfredobc.workers.dev/tts';
 let _ttsAudio = null;               // áudio atual (pra parar)
+let _ttsSeq = 0;                    // contador: só a fala MAIS NOVA toca (evita vozes duplicadas)
 const _ttsCache = new Map();        // "texto|rate" -> objectURL
 
 // Vozes do sistema (usadas só se a nuvem falhar)
@@ -84,6 +85,7 @@ function _falarLocal(texto, velocidade) {
 async function falar(texto, velocidade = 0.9) {
   texto = String(texto == null ? '' : texto).trim();
   if (!texto) return;
+  const seq = ++_ttsSeq;              // marca esta fala como a mais nova
   // para o que estiver tocando
   try { if (_ttsAudio) { _ttsAudio.pause(); _ttsAudio.currentTime = 0; } } catch (e) {}
   try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}
@@ -100,11 +102,13 @@ async function falar(texto, velocidade = 0.9) {
       src = URL.createObjectURL(blob);
       _ttsCache.set(key, src);
     }
+    if (seq !== _ttsSeq) return;      // outra fala mais nova começou enquanto baixava → não toca
     const a = new Audio(src);
     _ttsAudio = a;
     a.playbackRate = 1;
     await a.play();
   } catch (e) {
-    _falarLocal(texto, velocidade); // offline / bloqueio / erro → voz do sistema
+    if (seq !== _ttsSeq) return;      // não faz fallback de uma fala já obsoleta
+    _falarLocal(texto, velocidade);   // offline / bloqueio / erro → voz do sistema
   }
 }
