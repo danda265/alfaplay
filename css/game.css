@@ -379,3 +379,73 @@ body::before {
   .word-display { font-size: 1rem; }
   .key-btn { width: 34px; height: 34px; font-size: 0.5rem; }
 }
+
+/* ═══════════════ POLISH VISUAL — Anderson Rodrigo Costa © 2026 ═══════════════ */
+
+/* Fundo menos "chapado": vinheta suave por baixo das estrelas */
+body::before {
+  background:
+    radial-gradient(1px 1px at 10% 20%, #fff 0, transparent 100%),
+    radial-gradient(1px 1px at 40% 60%, #fff 0, transparent 100%),
+    radial-gradient(1px 1px at 70% 30%, #fff 0, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, #fff 0, transparent 100%),
+    radial-gradient(2px 2px at 25% 75%, rgba(255,255,255,.6) 0, transparent 100%),
+    radial-gradient(2px 2px at 55% 15%, rgba(255,255,255,.6) 0, transparent 100%),
+    radial-gradient(2px 2px at 80% 50%, rgba(255,255,255,.6) 0, transparent 100%),
+    radial-gradient(130% 90% at 50% -15%, #223150 0%, #12203b 45%, #0a1120 100%);
+}
+
+/* Conteúdo dos jogos ganha uma "moldura" (não afeta as aventuras, que não usam .main).
+   body > .main tem especificidade maior que o .main inline de cada jogo. */
+body > .main {
+  background: linear-gradient(180deg, rgba(30,41,59,.85), rgba(17,25,42,.9));
+  border: 3px solid var(--border);
+  border-bottom: 6px solid rgba(0,0,0,.35);
+  border-radius: 22px;
+  box-shadow: 0 10px 0 rgba(0,0,0,.25), 0 22px 48px rgba(0,0,0,.45);
+  margin-top: 1.4rem;
+  margin-bottom: 1.6rem;
+  padding: 1.6rem 1.2rem 1.9rem;
+  animation: main-in .45s ease both;
+}
+@keyframes main-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* Cabeçalho fixo no topo, com leve profundidade */
+.game-header {
+  background: linear-gradient(180deg, #223049, #1a2438);
+  box-shadow: 0 4px 14px rgba(0,0,0,.35);
+  position: sticky; top: 0; z-index: 50;
+}
+
+/* Botões com brilho no topo + leve elevação no hover */
+.btn { background-image: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,0)); transition: transform .08s, box-shadow .08s, filter .12s; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 rgba(0,0,0,.4); filter: brightness(1.06); }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.4); filter: none; }
+
+/* Selo de pontos com brilho dourado */
+.score-badge { box-shadow: 2px 2px 0 rgba(0,0,0,.4), 0 0 14px rgba(250,204,21,.4); }
+
+/* Pills de ano */
+.year-pill { transition: transform .12s, background .15s, color .15s, box-shadow .15s; }
+.year-pill:hover { transform: translateY(-2px); }
+.year-pill.active { box-shadow: 0 0 0 2px currentColor, 0 0 16px currentColor; }
+
+/* Cartas de memória: elevam no hover (sem atrapalhar a virada) */
+.memory-card { transition: transform .15s; }
+.memory-card:not(.encontrado):not(.virado):hover { transform: translateY(-5px); }
+
+/* Teclado da forca com profundidade */
+.key-btn { box-shadow: 0 3px 0 rgba(0,0,0,.4); transition: background .1s, transform .08s, box-shadow .08s; }
+.key-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.key-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.4); }
+
+/* Campo do ditado com foco iluminado */
+.ditado-input:focus { box-shadow: 0 0 0 4px rgba(96,165,250,.28); }
+
+/* Barra de progresso com brilho correndo */
+.progress-bar { background-size: 200% 100%; background-image: linear-gradient(90deg, var(--green), var(--yellow), var(--green)); animation: prog-shine 2.6s linear infinite; }
+@keyframes prog-shine { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  body > .main, .progress-bar { animation: none !important; }
+}
