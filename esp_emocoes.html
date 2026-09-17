@@ -163,7 +163,8 @@ function proximaRodada() {
   document.getElementById('rosto-display').textContent = alvo.e;
   document.getElementById('pergunta').textContent = 'Como essa pessoa está se sentindo?';
   falar('Como essa pessoa está se sentindo?');
-  setTimeout(() => falar(alvo.nome), 1500);
+  // (não fala mais o nome da resposta: revelava o quiz e, se a rodada trocasse
+  //  rápido, a fala antiga saía por cima da nova carinha — voz x tela)
 
   const cols = opcoes.length <= 2 ? 2 : opcoes.length <= 3 ? 3 : 2;
   const grid = document.getElementById('emocoes-grid');
