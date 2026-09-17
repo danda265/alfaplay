@@ -698,13 +698,8 @@ function confetti() {
 }
 
 // =========== TTS ===========
-function falar(txt, rate=1) {
-  if (!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(String(txt));
-  u.lang='pt-BR'; u.rate=rate; u.pitch=1;
-  speechSynthesis.speak(u);
-}
+// Usa a voz neural na nuvem definida em js/sounds.js (função global "falar"),
+// com fallback automático pra voz do sistema. Sem TTS inline aqui.
 
 // =========== ESTRELAS FUNDO ===========
 (function criaestrelas() {

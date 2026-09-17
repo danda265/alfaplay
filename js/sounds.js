@@ -46,22 +46,65 @@ const SFX = (() => {
   return { acerto, erro, nivel, click, flip, vitoria };
 })();
 
-// TTS — fala palavra em português
-function falar(texto, velocidade = 0.9) {
-  if (!window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(texto);
-  u.lang = 'pt-BR';
-  u.rate = velocidade;
-  u.pitch = 1.1;
-  // Tenta voz pt-BR
-  const vozes = speechSynthesis.getVoices();
-  const voz = vozes.find(v => v.lang.startsWith('pt')) || null;
-  if (voz) u.voice = voz;
-  speechSynthesis.speak(u);
+// ── TTS — voz neural pt-BR na nuvem, com fallback pra voz do sistema ──
+const TTS_URL = 'https://alfaplay-voz.alfredobc.workers.dev/tts';
+let _ttsAudio = null;               // áudio atual (pra parar)
+const _ttsCache = new Map();        // "texto|rate" -> objectURL
+
+// Vozes do sistema (usadas só se a nuvem falhar)
+let _sysVoices = [], _bestVoice = null;
+function _loadVoices() {
+  try { _sysVoices = speechSynthesis.getVoices() || []; } catch (e) { _sysVoices = []; }
+  const pt = _sysVoices.filter(v => /pt/i.test(v.lang || ''));
+  _bestVoice =
+    pt.find(v => /google/i.test(v.name) && /portug|pt-?br/i.test(v.name)) ||
+    pt.find(v => /natural|online/i.test(v.name)) ||
+    pt.find(v => /maria/i.test(v.name)) ||        // Maria soa melhor que Daniel
+    pt.find(v => /pt-?br/i.test(v.lang)) ||
+    pt[0] || null;
+}
+if (typeof speechSynthesis !== 'undefined') {
+  _loadVoices();
+  if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = _loadVoices;
 }
 
-// Garante vozes carregadas antes de usar
-if (speechSynthesis.onvoiceschanged !== undefined) {
-  speechSynthesis.onvoiceschanged = () => {};
+function _falarLocal(texto, velocidade) {
+  if (!window.speechSynthesis) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(texto));
+    u.lang = 'pt-BR';
+    u.rate = Math.max(0.6, Math.min(1, velocidade || 0.9));
+    u.pitch = 1.0;
+    if (_bestVoice) u.voice = _bestVoice;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+async function falar(texto, velocidade = 0.9) {
+  texto = String(texto == null ? '' : texto).trim();
+  if (!texto) return;
+  // para o que estiver tocando
+  try { if (_ttsAudio) { _ttsAudio.pause(); _ttsAudio.currentTime = 0; } } catch (e) {}
+  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}
+
+  const rate = velocidade >= 1 ? '0%' : velocidade >= 0.9 ? '-8%' : '-18%';
+  const key = texto + '|' + rate;
+  try {
+    let src = _ttsCache.get(key);
+    if (!src) {
+      const r = await fetch(`${TTS_URL}?text=${encodeURIComponent(texto)}&rate=${encodeURIComponent(rate)}`);
+      if (!r.ok) throw new Error('tts ' + r.status);
+      const blob = await r.blob();
+      if (blob.size < 400) throw new Error('audio curto');
+      src = URL.createObjectURL(blob);
+      _ttsCache.set(key, src);
+    }
+    const a = new Audio(src);
+    _ttsAudio = a;
+    a.playbackRate = 1;
+    await a.play();
+  } catch (e) {
+    _falarLocal(texto, velocidade); // offline / bloqueio / erro → voz do sistema
+  }
 }
